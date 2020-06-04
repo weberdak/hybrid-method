@@ -65,7 +65,7 @@ First, produce a TSV file of residue numbers, name, chemical shifts and dipolar 
 
 	python slf2xplor.py -i ossnmr.dat -o ossnmr --order 0.9 --align_order -0.5
 
-This will output three XPLOR-NIH restraint tables: [ossnmr_cs.tbl](examples/sln/input_xplor/ossnmr_cs.tbl), [ossnmr_dc.tbl](examples/sln/input_xplor/ossnmr_dc.tbl) and [ossnmr_cs_gly.tbl](examples/sln/input_xplor/ossnmr_cs_gly.tbl). 
+This will output three XPLOR-NIH restraint tables: [ossnmr_cs.tbl](examples/sln/input_xplor/ossnmr_cs.tbl), [ossnmr_dc.tbl](examples/sln/input_xplor/ossnmr_dc.tbl) and [ossnmr_cs_gly.tbl](examples/sln/input_xplor/ossnmr_cs_gly.tbl). Note that glycines CS are treated seperately since they require a unique shft tensor. For CS restraints, the isotropic chemical shift, determined from the average of the shift tensor compents, are subtratracted from the oriented CS observed in SLF spectra. Oriented chemical shifts MUST be [externally referenced correctly](http://dx.doi.org/10.1016/j.ssnmr.2014.03.003). The "reduced" shift is then divided by dynamic and alignment order parameters (i.e., 0.9 * -0.5). DC value a scaled the same way. In the above command, default 15N tensor parameters are used for backbone amides [Murray et. al., J. Mag. Res., 2014](https://doi.org/10.1016/j.jmr.2013.12.014) and non-glycine residues (--pas 57.3 81.2 228.1) and [Straus et. al., J. Biol. NMR, 2003](https://doi.org/10.1023/A:1024098123386) for glycines (--pas_gly 45.6 66.3 211.6). CSA and DC positions are assumed to have errors of 3 ppm (--error_csa 3.0) and 0.3 kHz (--error_dc 0.3), respectively. This accounts for linewidths and errors accociated with assuming a constant shift tensore for all residues. To modify the shift tensors and errrors, the options must be explicitly stated in the command line:
 
 	python slf2xplor.py \
        	-i ossnmr.dat \
@@ -77,8 +77,10 @@ This will output three XPLOR-NIH restraint tables: [ossnmr_cs.tbl](examples/sln/
        	--error_csa 3.0 \
        	--error_dc 0.3
   
-  Default parameters for backbone amides are taken from [Murray et. al., J. Mag. Res., 2014](https://doi.org/10.1016/j.jmr.2013.12.014) for non-glycine residues and [Straus et. al., J. Biol. NMR, 2003](https://doi.org/10.1023/A:1024098123386) for glycines
+Now that we have [ossnmr_cs.tbl](examples/sln/input_xplor/ossnmr_cs.tbl), [ossnmr_dc.tbl](examples/sln/input_xplor/ossnmr_dc.tbl) and [ossnmr_cs_gly.tbl](examples/sln/input_xplor/ossnmr_cs_gly.tbl) restraint files, we are ready to do the structure calculation.
   
+#### Step 3: Running the simulated annealing calculation
+
 
 
   
