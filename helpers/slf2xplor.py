@@ -34,11 +34,11 @@ def parse_args():
     )
     parser.add_argument(
         '--error_csa', type=float,
-        help='Error associated with chemical shifts in ppm. Default: 3.0', default=3.0
+        help='Error associated with chemical shifts in ppm. Default: 5.0', default=5.0
     )
     parser.add_argument(
         '--error_dc', type=float,
-        help='Error associated with chemical shifts in ppm. Default: 0.3', default=0.3
+        help='Error associated with chemical shifts in ppm. Default: 0.5', default=0.5
     )
     args = parser.parse_args()
     return args
