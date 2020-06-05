@@ -30,25 +30,30 @@
 xplor.requireVersion('3.0')
 import protocol
 import argparse
+import numpy as np
 
 # Argument Parser
 def parse_args():
     parser = argparse.ArgumentParser(description='Initial folding for membrane protein structure.',
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument(
-        '--structures_in', type=str, nargs='+',
+        '--structure_in', type=str,
         help='Starting structure (PDB file)'
     )
     parser.add_argument(
-        '--DC_NH_work_in', type=str,
-        help='Working DC restraints table. Default: None', default=''
+        '--DC_NH', type=str,
+        help='DC restraints table. Default: None', default=''
     )
     parser.add_argument(
-        '--CSA_N1_work_in', type=str,
-        help='Working CSA restraints table. Default: None', default=''
+        '--CSA_N1', type=str,
+        help='CSA restraints table. Default: None', default=''
     )
     parser.add_argument(
-        '--DIHE_in', type=str,
+        '--CSA_N1_gly', type=str,
+        help='CSA restraints table for glycines. Default: None', default=''
+    )
+    parser.add_argument(
+        '--DIHE', type=str,
         help='Dihedral restraints table. Default: None', default=''
     )
     parser.add_argument(
@@ -61,25 +66,30 @@ def parse_args():
     )
     parser.add_argument(
         '--CSA_N1_tensor', type=float, nargs='+',
-        help='Non-glycine N15 principal axis system components in ppm (64.9,-105.9,41.0).',
-        default=(64.9,-105.9,41.0)
+        help='Non-glycine N15 principal axis system components in ppm (57.3, 81.2, 228.1).',
+        default=(57.3,81.2,228.1)
+    )
+    parser.add_argument(
+        '--CSA_N1_tensor_gly', type=float, nargs='+',
+        help='Glycine N15 principal axis system components in ppm (45.6, 66.3, 211.6).',
+        default=(45.6,66.3,211.6)
     )
     parser.add_argument(
         '--CSA_N1_beta', type=float,
         help='Non-glycine beta Euler angle for N15 tensor. Default: -17.0', default=-17.0
     )
     parser.add_argument(
-        '--eefx', type=bool,
-        help='Use EEFx force field (True or False). Default: True', default=True, choices=(True, False)
+        '--CSA_N1_beta_gly', type=float,
+        help='Glycine beta Euler angle for N15 tensor. Default: -21.6', default=-21.6
     )
     parser.add_argument(
-        '--helices', type=int, nargs='+',
-        help='Residue IDs of helical segments. Default: None',
+        '--tm_domain', type=int, nargs='+',
+        help='Start/Stop Residue IDs of helical segments. Default: None',
         default=''
     )
     parser.add_argument(
         '--immx_thickness', type=float,
-        help='IMMx Membrane thickness. Default: 25.8', default=25.8
+        help='IMMx Membrane thickness. Default: 25.8 (DMPC/POPC bicelle)', default=25.8
     )
     parser.add_argument(
         '--immx_nparameter', type=int,
@@ -94,20 +104,12 @@ def parse_args():
         help='DC/CSA force scaling. Default: 3.0', default=3.0
     )
     parser.add_argument(
-        '--HBDA_in', type=str,
+        '--HBDA', type=str,
         help='H-bond restraints table. Default: None', default=''
     )
     parser.add_argument(
-        '--NOE_in', type=str,
+        '--NOE', type=str,
         help='NOE distance restraints table. Default: None', default=''
-    )
-    parser.add_argument(
-        '--method', type=str,
-        help='NOE distance restraints table. Default: None', default='fold', choices=('fold','refine')
-    )
-    parser.add_argument(
-        '--EzPot', type=bool,
-        help='Use Ez potential for depth of insrtion. Default: False', default=False, choices=(True, False)
     )
     args = parser.parse_args()
     return args
@@ -115,47 +117,40 @@ def parse_args():
 
 # Read arguments
 args = parse_args()
-method = args.method
-
-# Refinement parameters
-structures_in = args.structures_in     # Best structure from folding step
-orderedRegion = 'resid %s:%s and (name CA)' % (args.helices[0],args.helices[1])
-
-
+tm_domain = 'resid %s:%s and (name CA)' % (args.tm_domain[0],args.tm_domain[1])
 nstructures = args.nstructures         # Number of structures to calculate
 outname = "SCRIPT_STRUCTURE.sa"        # File prefix same as python script
 seed = 3421                            # Random seed
 
-# Initial and final temperatures for High T and simulated annealin
-ini_temp = 3000
-fin_temp = 25
-ste_temp = 12.5        # Initial and final temperatures for High T and simulated annealing 
-
 
 # Input files
-structures_in = args.structures_in
-DC_NH_work_in  = args.DC_NH_work_in
-DC_NH_free_in = ''
-CSA_N1_work_in = args.CSA_N1_work_in
-CSA_N1_free_in = ''
-DIHE_in = args.DIHE_in
-NOE_in = args.NOE_in
-HBDA_in = args.HBDA_in
+structure_in = args.structure_in
+DC_NH  = args.DC_NH
+CSA_N1 = args.CSA_N1
+CSA_N1_gly = args.CSA_N1_gly
+DIHE = args.DIHE
+NOE = args.NOE
+HBDA = args.HBDA
 
 
-# OS-ssNMR parameters
+# 1H-15N DC
 DC_NH_max = args.DC_NH_max  # Maximum dipolar coupling in kHz
-CSA_N1_tensor = args.CSA_N1_tensor
-CSA_N1_beta = args.CSA_N1_beta
 
-# EzPot Potential
-EzPot = args.EzPot
+
+# 15N tensor (correct to reduced sigma notation and reorder for XPLOR-NIH input)
+sxx, syy, szz = args.CSA_N1_tensor; iso = np.mean(args.CSA_N1_tensor)
+CSA_N1_tensor = (iso-sxx, iso-szz, iso-syy)
+sxx, syy, szz = args.CSA_N1_tensor_gly; iso = np.mean(args.CSA_N1_tensor_gly)
+CSA_N1_tensor_gly = (iso-sxx, iso-szz, iso-syy)
+CSA_N1_beta = args.CSA_N1_beta
+CSA_N1_beta_gly = args.CSA_N1_beta_gly
 
 
 # EEFx Membrane parameters
-eefx = args.eefx
-immx_com = 'resid %s:%s and (name CA)' % (args.helices[0],args.helices[1])  # Center of mass selection for IMMx position.
-immx_thickness = args.immx_thickness        # 25.4*0.75 + 27.0*0.25 = 25.8 A for DMPC/POPC bicelle
+# Membrane hydrophobic thickness: DMPC (25.4A), DPPC (28.6A), POPC (27.0A), DOPC (29.6A)
+# See Marsh, Handbook of lipid bilayers, 2nd Ed. p. 379. (FROM XPLOR EXAMPLES)
+immx_com = 'resid %s:%s and (name CA)' % (args.tm_domain[0],args.tm_domain[1])
+immx_thickness = args.immx_thickness        # 25.4*0.75 + 27.0*0.25 = 25.8 A for DMPC/POPC bicelle ()
 immx_nparameter = args.immx_nparameter      # IMMx n parameter of membrane profile
 
 
@@ -181,19 +176,15 @@ fin_cs    = fin_dihd * w_slf * 1/(w_r+1)     # CSA force final
 
 
 # Initial structure
-ini_model=structures_in[0]
-if method == 'fold':
-    import psfGen
-    psfGen.pdbToPSF(ini_model)
-    protocol.genExtendedStructure()
-if method == 'refine':
-    protocol.loadPDB(ini_model, deleteUnknownAtoms=True)
+ini_model=structure_in
+import psfGen
+psfGen.pdbToPSF(ini_model)
+protocol.genExtendedStructure()
 
 
 # Load EEFX2 topology
-if eefx:
-    protocol.parameters['protein']="eefx/protein_eefx2.par"
-    protocol.topology['protein']  ="eefx/protein_eefx2.top"
+protocol.parameters['protein']="eefx/protein_eefx2.par"
+protocol.topology['protein']  ="eefx/protein_eefx2.top"
 
 
 # Initialize potentials and parameters for high temperature dynamics simulated annealing
@@ -207,7 +198,7 @@ rampedParams = []                     # Settings for annealing stage
 lowTempParams = []                    # Settingd for low T dynamics (i.e., Powell minimization)
 
 
-### DIPOLAR COUPLING RESTRAINTS ###
+### 1H-15N DIPOLAR COUPLING RESTRAINTS ###
 
 # Initialize DC tensor
 dc_tensor = {}
@@ -219,10 +210,10 @@ oTensor.setRh(0)
 dc_tensor['amide_NH'] = oTensor
 
 # Load working DC restraints if specified
-if DC_NH_work_in:
+if DC_NH:
     dc = PotList('DIPL')
     from rdcPotTools import create_RDCPot
-    for (name, file, tensor, scale) in [('amide_NH', DC_NH_work_in, dc_tensor['amide_NH'], 1)]:
+    for (name, file, tensor, scale) in [('amide_NH', DC_NH, dc_tensor['amide_NH'], 1)]:
         DIPL=create_RDCPot(name=name, file=file, oTensor=tensor)
         DIPL.setScale(scale)
         DIPL.setShowAllRestraints(True)
@@ -253,17 +244,27 @@ oTensor.setRh(0)
 csa_tensor['amide_N'] = oTensor
 
 # Load working CSA restraints if specified
-if CSA_N1_work_in:
+
+### DEVELOPMENT SECTION
+# Add more CSA tensors here if need. Ensure AtomOrder is corrent in tbl file.
+CSA_all = []
+if CSA_N1:
+    CSA_all.append(('amide_N1', CSA_N1, CSA_N1_tensor, CSA_N1_beta, 1))
+if CSA_N1_gly:
+    CSA_all.append(('amide_N1_gly', CSA_N1_gly, CSA_N1_tensor_gly, CSA_N1_beta_gly, 1))
+### END DEVELOPMENT SECTION
+
+if CSA_all:
     csa = PotList('CS')
     from csaPotTools import create_CSAPot
-    for (name, file, scale) in [('amide_N',  CSA_N1_work_in, 1)]:
+    for (name, file, atom_sigma, ang_b, scale) in CSA_all:
         CS=create_CSAPot(name=name, file=file, oTensor=csa_tensor['amide_N'])
         CS.setScale(scale)
         CS.setTensorClass("bond")
         CS.setThreshold(0.01)
         CS.setPotType('square')
-        CS.setSigma(CSA_N1_tensor)
-        CS.setBeta(CSA_N1_beta)
+        CS.setSigma(atom_sigma)
+        CS.setBeta(ang_b)
         CS.setAtomOrder("123")
         CS.setShowAllRestraints(True)
         CS.setVerbose(True)
@@ -282,8 +283,8 @@ if CSA_N1_work_in:
 ### DIHEDRAL RESTRAINTS ###
     
 # Load dihedral restraints (i.e., TALOS) if specified
-if DIHE_in:
-    protocol.initDihedrals(DIHE_in)
+if DIHE:
+    protocol.initDihedrals(DIHE)
     from xplorPot import XplorPot
     pots.append(XplorPot('CDIH'))
     highTempParams1.append(StaticRamp("pots['CDIH'].setScale(ini_dihd)"))
@@ -322,9 +323,9 @@ pots['IMPR'].setThreshold(5.00)     # dflt [2.0]
 
 ### H-BOND RESTRAINTS ###
 
-if HBDA_in:
+if HBDA:
     # hbda - distance/angle bb hbond term
-    protocol.initHBDA(HBDA_in)
+    protocol.initHBDA(HBDA)
     pots.append( XplorPot('HBDA') )
 
     # hbdb - knowledge-based backbone hydrogen bond term
@@ -334,7 +335,7 @@ if HBDA_in:
 
 ### NOE DISTANCE RESTRAINTS
 
-if NOE_in:
+if NOE:
     dsts = PotList('NOE')
     from noePotTools import create_NOEPot
     for (exp, file, scale) in [('noe', NOE_in, 1)]:
@@ -346,88 +347,46 @@ if NOE_in:
     rampedParams.append(MultRamp(ini_noe, fin_noe, "dsts.setScale(VALUE)"))
     lowTempParams.append( StaticRamp("dsts.setScale(fin_noe )"))
 
-    
-# Ez Potential
-if EzPot:
-    Ez_pots = []
-    from membraneTools import EzPot
-    Ezt= EzPot("EZt")
-    Ezt.setScale(1)
-    Ezt.setXYCenter(0)
-    Ezt.setThickness(25)
-    Ez_pots.append(Ezt)
 
 # Initialize IMMx membrane
-if eefx:
-    Zpos = 0
-    from eefxPotTools import create_EEFxPot, param_LK
-    from eefxPotTools import setCenter, setCenterXY
-    eefx=create_EEFxPot("EEFX","ALL",paramSet=param_LK,verbose=False)
-    eefx.setScale(1)
-    #eefx.setVerbose(1)
-    eefx.setIMMx(1)
-    eefx.useGROUp(1)
-    eefx.setMoveTol(0.5)
-    print(eefx.showParam())
-    eefx.setThickness(immx_thickness)
-    eefx.setProfileN(immx_nparameter)
-    eefx.setA(0.85)
-    pots.append(eefx)
-    setCenter(immx_com, Zpos)		# Translate selected center of mass to IMMx Zpos.
-    highTempParams1.append(StaticRamp("eefx.setScale(0)"))
-    highTempParams.append(StaticRamp("eefx.setScale(0.004)"))
-    rampedParams.append(MultRamp(0.004,1.0,"eefx.setScale(VALUE)"))
-    lowTempParams.append(StaticRamp("eefx.setScale(1.0)"))
+Zpos = 0
+from eefxPotTools import create_EEFxPot, param_LK
+from eefxPotTools import setCenter, setCenterXY
+eefx=create_EEFxPot("EEFX","ALL",paramSet=param_LK,verbose=False)
+eefx.setScale(1)
+#eefx.setVerbose(1)
+eefx.setIMMx(1)
+eefx.useGROUp(1)
+eefx.setMoveTol(0.5)
+print(eefx.showParam())
+eefx.setThickness(immx_thickness)
+eefx.setProfileN(immx_nparameter)
+eefx.setA(0.85)
+pots.append(eefx)
+setCenter(immx_com, Zpos)		# Translate selected center of mass to IMMx Zpos.
+highTempParams1.append(StaticRamp("eefx.setScale(0)"))
+highTempParams.append(StaticRamp("eefx.setScale(0.004)"))
+rampedParams.append(MultRamp(0.004,1.0,"eefx.setScale(VALUE)"))
+lowTempParams.append(StaticRamp("eefx.setScale(1.0)"))
     
     
 # Initialize REPEL if EEFX not used - XPLOR-NIH Tutorial Settings - eefx-membrane
-if eefx:
-    pots.append(XplorPot('VDW'))          # dflt scale [1]
-    highTempParams1.append(StaticRamp("pots['VDW'].setScale(0.004)"))
-    highTempParams1.append(StaticRamp("""protocol.initNBond(cutnb=100,
+pots.append(XplorPot('VDW'))          # dflt scale [1]
+highTempParams1.append(StaticRamp("pots['VDW'].setScale(0.004)"))
+highTempParams1.append(StaticRamp("""protocol.initNBond(cutnb=100,
                                                          repel=1.2,
                                                          nbxmod=4,
                                                          tolerance=45,
                                                          onlyCA=1)"""))
-    # standard all-atom repel
-    highTempParams2.append(StaticRamp("protocol.initNBond(nbxmod=4)"))
-    highTempParams2.append(StaticRamp("pots['VDW'].setScale(0.1)"))
-    highTempParams.append(StaticRamp("pots['VDW'].setScale(0)"))
-    rampedParams.append(StaticRamp("pots['VDW'].setScale(0)"))
-    lowTempParams.append(StaticRamp("pots['VDW'].setScale(0)"))
+# standard all-atom repel
+highTempParams2.append(StaticRamp("protocol.initNBond(nbxmod=4)"))
+highTempParams2.append(StaticRamp("pots['VDW'].setScale(0.1)"))
+highTempParams.append(StaticRamp("pots['VDW'].setScale(0)"))
+rampedParams.append(StaticRamp("pots['VDW'].setScale(0)"))
+lowTempParams.append(StaticRamp("pots['VDW'].setScale(0)"))
     
-else:
-    # Standard settings using torsionDB
-    pots.append(XplorPot('VDW'))          # dflt scale [1]
-    highTempParams.append(StaticRamp("""protocol.initNBond(cutnb=100,repel=1.2,nbxmod=4,tolerance=45,onlyCA=1)"""))
-
-    # Standard all-atom repel for simulated annealing
-    rampedParams.append(StaticRamp("protocol.initNBond(nbxmod=4)"))
-    rampedParams.append(MultRamp(ini_vrep,fin_vrep,"xplor.command('param nbonds repel VALUE end end')"))
-    
-    # Low temperature dynamics
-    lowTempParams.append(StaticRamp("protocol.initNBond(nbxmod=4)"))
-    lowTempParams.append(StaticRamp(fin_vrep,"xplor.command('param nbonds repel VALUE end end')"))
-    
-
-# Set up Internal Variables Module
-from ivm import IVM
-dyn = IVM()                     # IVM object for torsion-angle dynamics.
-dyn.reset()                     # reset ivm topology for torsion-angle dynamics.
-protocol.torsionTopology(dyn)
-minc = IVM()                    # IVM object for Cartesian minimization.
-protocol.cartesianTopology(minc)
-
-from simulationTools import AnnealIVM
-cool = AnnealIVM(initTemp=ini_temp,     # Cooling loop.
-                 finalTemp=fin_temp,
-                 tempStep=ste_temp,
-                 ivm=dyn,
-                 rampedParams=rampedParams)
-
 
 ### ACCEPTANCE CRITERIA - VEGLIA ###
-
 def accept(pots):
     """
     return True if current structure meets acceptance criteria
@@ -451,32 +410,23 @@ def accept(pots):
 
 
 # Calculate structure module for folding - Veglia protocol
-def calcOneStructure_fold(loopInfo):
+def calcOneStructure(loopInfo):
     """
     This function calculates a single structure, performs analysis on the
     structure and then writes out a pdb file with remarks.
-    """
-    # Generate initial structure and minimize.
-    #===========================================================================
-    # Generate initial structure by randomizing torsion angles.
-    # Then set torsion angles from restraints (this shortens high T dynamics).
-    import monteCarlo
-    monteCarlo.randomizeTorsions(dyn)
-    protocol.fixupCovalentGeom(maxIters=100, useVDW=1)
-    if DIHE_in:
-        import torsionTools
-        torsionTools.setTorsionsFromTable(DIHE_in)
-        
-    # Import dynamics toolset  
+    """        
+    # Import dynamics toolset
+    from ivm import IVM
     from protocol import initDynamics
     from simulationTools import AnnealIVM
     ini_dyn  = IVM()
     sim_cool = IVM()
     fin_dyn  = IVM()
+    
     protocol.torsionTopology(ini_dyn)
     protocol.torsionTopology(fin_dyn)
     protocol.torsionTopology(sim_cool)
-
+    
     # Temperature settings
     ini_t  = 3500   #-------- initial temp -----#
     fin_t  = 25	    #-------- final temp -------#
@@ -484,13 +434,21 @@ def calcOneStructure_fold(loopInfo):
 
     # Stage 1 - Initial torsion minimization
     InitialParams(rampedParams)	       # Initialize parameters for high temp dynamics
-    if eefx:
-        setCenter(immx_com, Zpos)       # Translate selected center of mass to IMMx Zpos
-        InitialParams(highTempParams1) # Reset some rampedParams.
-    else:
-        InitialParams(highTempParams)  # Reset some rampedParams. No EEFX.
+    setCenter(immx_com, Zpos)          # Translate selected center of mass to IMMx Zpos
+    InitialParams(highTempParams1)     # Reset some rampedParams.
 
     # Stage 1 - Torsion angle minimization.
+    # Generate initial structure and minimize.
+    #===========================================================================
+    # Generate initial structure by randomizing torsion angles.
+    # Then set torsion angles from restraints (this shortens high T dynamics).
+    import monteCarlo
+    monteCarlo.randomizeTorsions(ini_dyn)
+    protocol.fixupCovalentGeom(maxIters=100, useVDW=1)
+    if DIHE:
+        import torsionTools
+        torsionTools.setTorsionsFromTable(DIHE)
+        
     protocol.initMinimize(ini_dyn,
                           potList=pots,
                           numSteps=100,
@@ -498,52 +456,46 @@ def calcOneStructure_fold(loopInfo):
     ini_dyn.run()
     
     # Stage 2 - High temperature torsion dynamics
-    if eefx:
-        # Phase in EEFX step 1
-        protocol.initDynamics(dyn,
-                              potList=pots,         # potential terms to use.
-                              bathTemp=ini_t,       # set bath temperature.
-                              initVelocities=1,     # uniform initial velocities.
-                              finalTime=3,          # run for finalTime or
-                              numSteps=3001,        # numSteps * 0.001, whichever is less.
-                              printInterval=100)    # printing rate in steps.
-        dyn.setETolerance(ini_temp/100)             # used to det. stepsize, dflt [temp/1000].
-        ini_dyn.run()
 
-        # Phase in EEFX step 2
-        InitialParams(highTempParams2)    
-        setCenter(immx_com, Zpos)            # translate selected center of mass to IMMx Zpos.
-        protocol.initDynamics(dyn,
-                              potList=pots,         # potential terms to use.
-                              bathTemp=ini_t,       # set bath temperature.
-                              initVelocities=1,     # uniform initial velocities.
-                              finalTime=3,          # run for finalTime or
-                              numSteps=3001,        # numSteps * 0.001, whichever is less.
-                              printInterval=100)    # printing rate in steps.
-        dyn.setETolerance(ini_temp/100)             # used to det. stepsize, dflt [temp/1000].
-        ini_dyn.run()
+    # Phase in EEFX step 1
+    protocol.initDynamics(ini_dyn,
+                          potList=pots,         # potential terms to use.
+                          bathTemp=ini_t,       # set bath temperature.
+                          initVelocities=1,     # uniform initial velocities.
+                          finalTime=3,          # run for finalTime or
+                          numSteps=3001,        # numSteps * 0.001, whichever is less.
+                          printInterval=100)    # printing rate in steps.
+    ini_dyn.setETolerance(ini_t/100)             # used to det. stepsize, dflt [temp/1000].
+    ini_dyn.run()
 
-        
-    # High temperature dynamics. With or without EEFX.
-    if eefx:
-        setCenter(immx_com, Zpos)             # translate selected center of mass to IMMx Zpos.
-        
+    # Phase in EEFX step 2
+    InitialParams(highTempParams2)    
+    setCenter(immx_com, Zpos)            # translate selected center of mass to IMMx Zpos.
+    protocol.initDynamics(ini_dyn,
+                          potList=pots,         # potential terms to use.
+                          bathTemp=ini_t,       # set bath temperature.
+                          initVelocities=1,     # uniform initial velocities.
+                          finalTime=3,          # run for finalTime or
+                          numSteps=3001,        # numSteps * 0.001, whichever is less.
+                          printInterval=100)    # printing rate in steps.
+    ini_dyn.setETolerance(ini_t/100)             # used to det. stepsize, dflt [temp/1000].
+    ini_dyn.run()
+
+    # High temperature dynamics full EEFX
+    setCenter(immx_com, Zpos)             # translate selected center of mass to IMMx Zpos.    
     InitialParams(highTempParams)
-    protocol.initDynamics(dyn,
+    protocol.initDynamics(ini_dyn,
                           potList=pots,      # potential terms to use.
                           bathTemp=ini_t,    # set bath temperature.
                           initVelocities=1,  # uniform initial velocities.
                           finalTime=20,	     # run for finalTime or
                           numSteps=20001,    # numSteps * 0.001, whichever is less.
                           printInterval=500) # printing rate in steps.
-    dyn.setETolerance(ini_temp/100)          # used to det. stepsize, dflt [temp/1000].
+    ini_dyn.setETolerance(ini_t/100)          # used to det. stepsize, dflt [temp/1000].
     ini_dyn.run()
 
-    
     # Stage 3 - Simulated annealing
-    if eefx:
-        setCenter(immx_com, Zpos)             # translate selected center of mass to IMMx Zpos.
-        
+    setCenter(immx_com, Zpos)             # translate selected center of mass to IMMx Zpos.
     InitialParams(rampedParams)
     cool = AnnealIVM(ivm           = sim_cool,
  		     initTemp      = ini_t,
@@ -557,148 +509,41 @@ def calcOneStructure_fold(loopInfo):
 			  printInterval = 100)
     cool.run()
     
-    # Stage 3b - Optional Depth of insertion (EzPot)
-    if EzPot:
-        from xplor import select
-        m = IVM(xplor.simulation)
-        protocol.initMinimize(m,numSteps=10)
-        #m.setVerbose(m.verbose() | m.printNodeDef)
-        m.setStepType("MinimizeCG")
-        m.setNumSteps(10)
-        m.setDEpred(1)
-        m.setETolerance(1e-7)
-        m.setPrintInterval(1)
-        groupList=m.groupList()
-        groupList.append(select('resid 0:35'))
-        m.setGroupList(groupList)
-        m.setHingeList([('translate', select('resid 0:35')),])
-        m.potList().removeAll()
-        m.potList().add(Ezt)
-        m.run()
-
     # Stage 4 - Low temperature torsion dynamics
     InitialParams(lowTempParams)
-    protocol.initDynamics(ivm          = fin_dyn,
+    protocol.initDynamics(ivm            = fin_dyn,
                           potList        = pots, 
                           bathTemp       = fin_t,
                           initVelocities = 1,
                           finalTime      = 20,           
-                          numSteps       = 15000, 	  
+                          numSteps       = 20000, 	  
                           printInterval  = 3000)
     fin_dyn.setETolerance( fin_t/10 )   
     fin_dyn.run()
 
-    # Stage 5 - Powel torsion angle minimization
+    # Stage 5 - Powell torsion angle minimization
     protocol.initMinimize(ivm	= fin_dyn,
 			  potList	= pots,
 			  printInterval	= 500)
     fin_dyn.run()
     pass
-    
-    
-# Calculate structure module (Marassi template)
-def calcOneStructure_refine(loopInfo):
-    """
-    This function calculates a single structure, performs analysis on the
-    structure and then writes out a pdb file with remarks.
-    """
-    InitialParams(rampedParams)     # parameters for SA.
-    InitialParams(highTempParams)   # reset some rampedParams.
-
-    # Initial Cartesian minimization.
-    #===========================================================================
-    protocol.initMinimize(minc,
-                          numSteps=500,         # dflt [500 steps]
-                          potList=pots,
-                          printInterval=50,
-                          dEPred=10)
-    minc.run()
-    
-    # High temperature dynamics.
-    #===========================================================================
-    #setCenter(imm_com, Zpos)            # translate selected center of mass to IMMx Zpos.
-    protocol.initDynamics(dyn,
-                          potList=pots,         # potential terms to use
-                          bathTemp=ini_temp,    # set bath temperature.
-                          initVelocities=1,     # uniform initial velocities.
-                          finalTime=10,         # run for finalTime ps or
-                          numSteps=10001,       # numSteps * 0.001, whichever is less
-                          printInterval=500)
-    dyn.setETolerance(ini_temp/100)             # used to det. stepsize, dflt [temp/1000]
-    dyn.run()
-
-    # Initialize integrator and loop for simulated annealing and run.
-    #===========================================================================
-    InitialParams(rampedParams)
-    protocol.initDynamics(dyn,
-                          potList=pots,
-                          finalTime=0.2,        # run for finalTime ps or
-                          numSteps=201,         # numSteps * 0.001, whichever is less
-                          printInterval=100)    
-    cool.run()                                  # Run cooling loop.
-    
-    # Final minimization.
-    #===========================================================================
-    # Torsion angle minimization.
-    protocol.initMinimize(dyn,
-                          numSteps=500,         # dflt [500 steps]
-                          potList=pots,
-                          printInterval=50)
-    dyn.run()
-
-    # Cartesian all-atom minimization.
-    protocol.initMinimize(minc,
-                          numSteps=500,         # dflt [500 steps]
-                          potList=pots,
-                          printInterval=50,
-                          dEPred=10)
-    minc.run()
-
-    # Rotate coordinates and tensor in EEF/IMMM membrane axis frame.
-    #===========================================================================
-    #setCenter(IMM_com, Zpos)            # translate selected center of mass to IMMx Zpos.
-    setCenterXY()           # translate protein coordinates to XY center.
-    
-    # Do analysis and write structure when this routine is finished.
-    pass
 
 
 # Loop control for folding stage
-if method == 'fold':
-    from simulationTools import StructureLoop, FinalParams
-    StructureLoop(structLoopAction=calcOneStructure_fold,
-                  numStructures=nstructures,
-                  pdbTemplate=outname,
-                  doWriteStructures=1,              # analyze and write coords after calc
-                  genViolationStats=1,              # print stats file
-                  averageContext=FinalParams(lowTempParams),
-                  averageFitSel="",                 # selection for bkbn rmsd [CA]
-                  averageCompSel="",                # selection for heavy atom rmsd
-                  averageTopFraction=0.1,           # Report stats on top 10%
-                  averagePotList=pots,              # Terms for stats and avg
-                  averageSortPots=[                 # Terms used to sort models
-                      term for term in pots \
-                      if term.instanceName() not in ("torsionDB","VDW")],
-    ).run()
+from simulationTools import StructureLoop, FinalParams
+StructureLoop(structLoopAction=calcOneStructure,
+              numStructures=nstructures,
+              pdbTemplate=outname,
+              doWriteStructures=1,              # analyze and write coords after calc
+              genViolationStats=1,              # print stats file
+              averageContext=FinalParams(lowTempParams),
+              averageFitSel="",                 # selection for bkbn rmsd [CA]
+              averageCompSel="",                # selection for heavy atom rmsd
+              averageTopFraction=0.1,           # Report stats on top 10%
+              averagePotList=pots,              # Terms for stats and avg
+              averageSortPots=[                 # Terms used to sort models
+                  term for term in pots \
+                  if term.instanceName() not in ("torsionDB","VDW")],
+).run()
 
 
-
-
-# Loop control (Marassi template)
-#from simulationTools import StructureLoop, FinalParams
-#StructureLoop(structLoopAction=calcOneStructure_refine,
-#              pdbFilesIn=structures_in,
-#              numStructures=nstructures,
-#              pdbTemplate=outname,
-#              calcMissingStructs=True,
-#              doWriteStructures=True,           # analyze and write coords after calc
-#              genViolationStats=True,           # print stats file
-#              averageContext=FinalParams(rampedParams),
-#              averageFitSel="(%s) and name CA" %# selection for bkbn fit and rmsd [CA]
-#                              orderedRegion,
-#              averageCompSel="not name H*",     # selection for heavy atom rmsd
-#              averageTopFraction=0.2,           # Report stats on top 20%
-#              averagePotList=pots,              # Terms for stats and avg
-#              #averageCrossTerms=[rdcs,csas,rdcsCross,csasCross],    # Cross correlation terms
-#              averageSortPots=pots,             # Terms used to sort models
-#              ).run()

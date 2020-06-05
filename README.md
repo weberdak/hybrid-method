@@ -81,6 +81,6 @@ Now that we have [ossnmr_cs.tbl](examples/sln/input_xplor/ossnmr_cs.tbl), [ossnm
   
 #### Step 3: Running the simulated annealing calculation
 
-
+Generate an extended structure from sequence using the [pdbutil webserver](https://spin.niddk.nih.gov/bax/nmrserver/pdbutil/ext.html)
 
   
