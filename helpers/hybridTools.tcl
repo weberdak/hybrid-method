@@ -132,7 +132,7 @@ proc helix_topology { h_selection a_selection { args } } {
 	set ca [measure center $sa]
 	set trans [trans origin $ca]
 	if { $no_z == on } {
-	    puts "test"
+	    #puts "test"
 	    set xrow [lindex $trans 0]
 	    set yrow [lindex $trans 1]
 	    set zrow [lindex $trans 2]
@@ -140,9 +140,9 @@ proc helix_topology { h_selection a_selection { args } } {
 	    set irow [lindex $trans 3]
 	    set trans [list $xrow $yrow $zrow $irow]
 	}
-	puts $trans
+	#puts $trans
 	$sel_all move $trans
-	draw sphere [measure center $sa]
+	#draw sphere [measure center $sa]
 	
 	# Calculate azimuthal angle of residue
 	# Rotate tilt to zero and determine angle from X,Y displacement of azi point from centroid.
@@ -159,19 +159,29 @@ proc helix_topology { h_selection a_selection { args } } {
 	#draw color red
 	#draw sphere $azi_point
 	set diff [vecsub $azi_point $c]
-	set azi_y [expr atan([lindex $diff 0]/[lindex $diff 1]) * 57.2957795130823]
-	set azi_x [expr atan([lindex $diff 1]/[lindex $diff 0]) * 57.2957795130823]
+	set diffx [lindex $diff 0]
+	set diffy [lindex $diff 1]
+	set aziy [expr atan($diffx/$diffy) * 57.2957795130823]
+	set azix [expr atan($diffy/$diffx) * 57.2957795130823]
+	
 	
 	# Determine phase (Y = 180, -Y = 0, X = 90, -X = 270)
-	if { [lindex $diff 1] > 0 } {
-	    # Positive Y
-	    set azi [expr 180 - $azi_y]
-	} else {
-	    # Negative Y
-	    set azi [expr 360 + $azi_y]
+	# +X (0 to 180 degrees)
+	if { $diffx > 0 } {
+	    # +X and -Y (0 to 90 degrees)
+	    if { $diffy < 0 } { set azi [expr 0 - $aziy]; #puts "+X-Y" }
+	    # +X and +Y (90 to 180 degrees)
+	    if { $diffy > 0 } { set azi [expr 180 - $aziy]; #puts "+X+Y"}
 	}
+	# -X (180 to 360 degrees)
+	if { $diffx < 0 } {
+	    # -X and +Y (180 to 270 degrees)
+	    if { $diffy > 0 } { set azi [expr 180 - $aziy]; #puts "-X+Y"}
+	    # -X and -Y (270 to 360 degrees)
+	    if { $diffy < 0 } { set azi [expr 360 - $aziy]; #puts "-X-Y" }
+	}   
 	lappend azi_angles $azi
-	#puts "$azi_y\t$azi_x\t$azi"	
+	#puts "$aziy\t$azix\t$azi\t$diffx\t$diffy"	
     }
     
     # Output to terminal
@@ -184,7 +194,7 @@ proc helix_topology { h_selection a_selection { args } } {
 
     # Output results to files
     if { $out != "null" } {
-	puts "Outputting result to $out..."
+	puts "Writing results to $out..."
 	set outf [open $out w]
 	puts $outf "#Frame\tTilt\tazi_[lindex $resid 0]"
 	for {set i 0} {$i < $num_frames} {incr i} {
