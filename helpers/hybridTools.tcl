@@ -164,21 +164,18 @@ proc helix_topology { h_selection a_selection { args } } {
 	set aziy [expr atan($diffx/$diffy) * 57.2957795130823]
 	set azix [expr atan($diffy/$diffx) * 57.2957795130823]
 	
-	
-	# Determine phase (Y = 180, -Y = 0, X = 90, -X = 270)
-	# +X (0 to 180 degrees)
+	# Determine phase (-X = 180, -Y = 270, X = 0, Y = 90)
 	if { $diffx > 0 } {
-	    # +X and -Y (0 to 90 degrees)
-	    if { $diffy < 0 } { set azi [expr 0 - $aziy]; #puts "+X-Y" }
-	    # +X and +Y (90 to 180 degrees)
-	    if { $diffy > 0 } { set azi [expr 180 - $aziy]; #puts "+X+Y"}
+	    # +X and -Y (270 to 360 degrees)
+	    if { $diffy < 0 } { set azi [expr 270 - $aziy] }
+	    # +X and +Y (0 to 90 degrees)
+	    if { $diffy > 0 } { set azi [expr 90 - $aziy] }
 	}
-	# -X (180 to 360 degrees)
 	if { $diffx < 0 } {
-	    # -X and +Y (180 to 270 degrees)
-	    if { $diffy > 0 } { set azi [expr 180 - $aziy]; #puts "-X+Y"}
-	    # -X and -Y (270 to 360 degrees)
-	    if { $diffy < 0 } { set azi [expr 360 - $aziy]; #puts "-X-Y" }
+	    # -X and +Y (90 to 180 degrees)
+	    if { $diffy > 0 } { set azi [expr 90 - $aziy] }
+	    # -X and -Y (180 to 270 degrees)
+	    if { $diffy < 0 } { set azi [expr 270 - $aziy] }
 	}   
 	lappend azi_angles $azi
 	#puts "$aziy\t$azix\t$azi\t$diffx\t$diffy"	
@@ -189,12 +186,12 @@ proc helix_topology { h_selection a_selection { args } } {
     set t_ang_std  [format "%.2f" [lindex [stats $tilt_angles] 1]]
     set a_ang_mean [format "%.2f" [lindex [stats $azi_angles] 0]]
     set a_ang_std  [format "%.2f" [lindex [stats $azi_angles] 1]]
-    puts "Average tilt angle of segment: $t_ang_mean +/- $t_ang_std"
-    puts "Average azi angle residue [lindex $resid 0]: $a_ang_mean +/- $a_ang_std"
+    #puts "Average tilt angle of segment: $t_ang_mean +/- $t_ang_std"
+    #puts "Average azi angle at [lindex $resid 0]: $a_ang_mean +/- $a_ang_std"
 
     # Output results to files
     if { $out != "null" } {
-	puts "Writing results to $out..."
+	#puts "Writing results to $out..."
 	set outf [open $out w]
 	puts $outf "#Frame\tTilt\tazi_[lindex $resid 0]"
 	for {set i 0} {$i < $num_frames} {incr i} {
@@ -212,6 +209,9 @@ proc helix_topology { h_selection a_selection { args } } {
     $sel_all delete
     $azi_region delete
     unset s1 s2 sa sel_all azi_region
+
+    # Return avg tilt, stdev tilt, avg azi, stdev azi
+    return [list $t_ang_mean $t_ang_std $a_ang_mean $a_ang_std]
 }
 
 
@@ -278,4 +278,6 @@ proc stats { data } {
     set std [expr sqrt((($num*$csum2)-pow($csum,2))/($num*($num-1)))]
     return [list $mean $std]
 }
+
+
 
