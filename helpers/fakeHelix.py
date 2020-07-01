@@ -14,7 +14,6 @@
 # Written by Daniel Weber, Veglia Lab
 # Last revised June 30 2020
 
-import numpy as np
 import argparse
 
 def parse_args():

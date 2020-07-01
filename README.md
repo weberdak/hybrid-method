@@ -1,10 +1,10 @@
 # hybrid-method
 
-Calculation of membrane protein structures using isotropic and anisotropic NMR restraints. 
+Workflow for calculating membrane protein structures using isotropic and anisotropic NMR restraints. 
 
 ## Description
 
-This repository details a protocol to determine the structure and topology of membrane proteins by hybridizing isotropic and anisotropic NMR restraints into XPLOR-NIH simulated annealing calculations. The protocol has been updated from our previous versions ([Shi et. al., J. Biol. NMR, 2009](https://doi.org/10.1007/s10858-009-9328-9) and [Mote et al., J. Biol. NMR, 2013](http://link.springer.com/10.1007/s10858-013-9766-2)) top incorportate new functions and force fields that have since been built into XPLOR-NIH. This protocol has also been designed for users who are not expert users of XPLOR-NIH and includes the following features:
+This repository details a protocol to determine the structure and topology of membrane proteins by hybridizing isotropic and anisotropic NMR restraints into XPLOR-NIH simulated annealing calculations. The protocol has been updated from our previous versions ([Shi et. al., J. Biol. NMR, 2009](https://doi.org/10.1007/s10858-009-9328-9) and [Mote et al., J. Biol. NMR, 2013](http://link.springer.com/10.1007/s10858-013-9766-2)) top incorporate new functions and force fields that have since been built into XPLOR-NIH. This protocol has also been designed for users who are not expert users of XPLOR-NIH and includes the following features:
 
 * Incorporates the [EEFx force field](http://dx.doi.org/10.1016/j.jmr.2014.03.011), with [updated parameters](https://link.springer.com/article/10.1007/s10858-016-0082-5), and the [IMMx implicit membrane model](http://dx.doi.org/10.1016/j.bpj.2015.06.047) introduced by the Marassi Lab.
 * A [hybrid-method.py](hybrid-method.py) script containing a preset protocol and parameter set. This script is not modified and is instead run from a Bash configuration shell script that lists the most critical parameters.
@@ -14,7 +14,7 @@ This repository details a protocol to determine the structure and topology of me
 * [hybridTools.tcl](helpers/hybridTools.tcl) library of VMD functions to analyze results. Including:
 	* Alignment of helical segments so topology is unaffected (i.e., not applying rotations)
 	* Helix tilt and azimuthal angle measurements
-* [fakeHelix.py](helpers/fakeHelix.py) helper tool to generate artificial diheral and hydrogen bonding restraints for transmembrane segments that can be safely assumed as being helical.
+* [fakeHelix.py](helpers/fakeHelix.py) helper tool to generate artificial dihedral and hydrogen bonding restraints for transmembrane segments that can be safely assumed as being helical.
 * All restraining potentials are optional. Just leave options blank in the configuration script if data is unavailable.
 
 List of XPLOR-NIH potentials/classes currently applied in the [hybrid-method.py](hybrid-method.py) script:
@@ -31,7 +31,7 @@ List of XPLOR-NIH potentials/classes currently applied in the [hybrid-method.py]
 
 ## Installation
 
-This method requires a UNIX operating system (i.e., MAC-OS or Linux) to install XPLOR-NIH. All commands shown below are excuted from a BASH terminal.
+This method requires a UNIX operating system (i.e., MAC-OS or Linux) to install XPLOR-NIH. All commands shown below are executed from a BASH terminal.
 
 * Python 3 (must include numpy)
 * [XPLOR-NIH 3.0](https://nmr.cit.nih.gov/xplor-nih/)
@@ -47,42 +47,53 @@ Sarcolipin (SLN) is a single-pass membrane protein and a well-known regulator of
 
 #### Step 1: Prepare dihedral restraints
 
-An adequate set of backbone dihedral restraints are usually neccesary to obtain the correct fold during simulated annealing. The hybrid-method.py script will function without these restraints, but calculations will generally run poorly in our experience. If chemical shifts are available, copy them into the TSV formatted file like [iso_shifts.dat](examples/sln/input_raw/iso_shifts.dat). These can be prepared using a spreadsheet, then copyied and pasted into a text file. Make sure the header line is correct and only standard atom names are used. Convert this file to a TALOS-N input file using the [tsv2talos.py](helpers/tsv2talos.py) helper script as follows:
+An adequate set of backbone dihedral restraints are usually necessary to obtain the correct fold during simulated annealing. The hybrid-method.py script will function without these restraints, but calculations will generally run poorly in our experience. If chemical shifts are available, copy them into the TSV formatted file like [iso_shifts.dat](examples/sln/input_raw/iso_shifts.dat). These can be prepared using a spreadsheet, then copied and pasted into a text file. Make sure the header line is correct and only standard atom names are used. Convert this file to a TALOS-N input file using the [tsv2talos.py](helpers/tsv2talos.py) helper script as follows:
 
 	python tsv2talos.py -i iso_shifts.dat -o iso_shifts.tls -s MGINTRELFLNFTIVLITVILMWLLVRSYQY
 
 This produces the [iso_shifts.tls](examples/sln/input_raw/iso_shifts.tls) that can then be submitted to the [TALOS-N webserver](https://spin.niddk.nih.gov/bax/nmrserver/talosn/) to generate dihedral angle restraints. Note that TALOS inputs can also be generated by Sparky. Take the [pred.tab](examples/sln/input_raw/pred.tab) output file returned by the server and convert it to a restraint file using the [convertTalos](https://nmr.cit.nih.gov/xplor-nih/doc/current/helperPrograms/convertTalos.html) tool shipped with XPLOR-NIH:
 	
 	convertTalos -out iso_shifts.tbl -predFile pred.tab
-	
+
 The [iso_shifts.tbl](examples/sln/input_xplor/iso_shifts.tbl) will be used as the XPLOR-NIH input.
 
 
 #### Step 2: Prepare CSA and DC restraints
 
-15N CSA and 1H-15N DC measurements are usually taken directly from crosspeak peak positions observed in a PISEMA (or other seperated local field, SLF) OS-ssNMR spectrum of the membrane protein aligned using either bicelles or glass plates. Note that the hybrid-method.py script can be used if either CSA or DC measurements are missing (i.e., if data is only available from 1D 15N CP experiments of selectively labelled samples). CSA and DC restraints must be scaled appropriately to account for residual dynamics (general order parameter) and the orientation of alignment (bicelle flip angle). To perform this scaling, and then output restraints in XPLOR-NIH format, the [slf2xplor.py](helpers/slf2xplor.py) helper tool is available.
+15N CSA and 1H-15N DC measurements are usually taken directly from crosspeak peak positions observed in a PISEMA (or other separated local field, SLF) OS-ssNMR spectrum of the membrane protein aligned using either bicelles or glass plates. Note that the hybrid-method.py script can be used if either CSA or DC measurements are missing (i.e., if data is only available from 1D 15N CP experiments of selectively labeled samples). CSA and DC restraints must be scaled appropriately to account for residual dynamics (general order parameter) and the orientation of alignment (bicelle flip angle). To perform this scaling, and then output restraints in XPLOR-NIH format, the [slf2xplor.py](helpers/slf2xplor.py) helper tool is available.
 
-First, produce a TSV file of residue numbers, name, chemical shifts and dipolar coupling like [ossnmr.dat](examples/sln/input_raw/ossnmr.dat). If values are unavailable, specify a non-numeric value ("n", "nan" etc.) - do not leave any values blank as the file will not read correctly. For SLN, a [hcSE-SAMPI4](https://link.springer.com/article/10.1007/s10858-019-00273-1) spectrum was acquired in unflipped bicelles (--align_order -0.5) and fitted to a general order parameter of 0.9 (--order 0.9) using the [PISA-SPARKY](https://github.com/weberdak/pisa.py) program we have written to analyse SLF spectra of alpha-helical membrane proteins. CSA and DC restraint tables are generated from [ossnmr.dat](examples/sln/input_raw/ossnmr.dat) by:
+First, produce a TSV file of residue numbers, name, chemical shifts and dipolar coupling like [ossnmr.dat](examples/sln/input_raw/ossnmr.dat). If values are unavailable, specify a non-numeric value ("n", "nan" etc.) - do not leave any values blank as the file will not read correctly. For SLN, a [hcSE-SAMPI4](https://link.springer.com/article/10.1007/s10858-019-00273-1) spectrum was acquired in unflipped bicelles (--align_order -0.5) and fitted to a general order parameter of 0.9 (--order 0.9) using the [PISA-SPARKY](https://github.com/weberdak/pisa.py) program we have written to analyze SLF spectra of alpha-helical membrane proteins. CSA and DC restraint tables are generated from [ossnmr.dat](examples/sln/input_raw/ossnmr.dat) by:
 
 	python slf2xplor.py -i ossnmr.dat -o ossnmr --order 0.9 --align_order -0.5
 
-This will output three XPLOR-NIH restraint tables: [ossnmr_cs.tbl](examples/sln/input_xplor/ossnmr_cs.tbl), [ossnmr_dc.tbl](examples/sln/input_xplor/ossnmr_dc.tbl) and [ossnmr_cs_gly.tbl](examples/sln/input_xplor/ossnmr_cs_gly.tbl). Note that glycines CS are treated seperately since they require a unique shft tensor. For CS restraints, the isotropic chemical shift, determined from the average of the shift tensor compents, are subtratracted from the oriented CS observed in SLF spectra. Oriented chemical shifts MUST be [externally referenced correctly](http://dx.doi.org/10.1016/j.ssnmr.2014.03.003). The "reduced" shift is then divided by dynamic and alignment order parameters (i.e., 0.9 * -0.5). DC value a scaled the same way. In the above command, default 15N tensor parameters are used for backbone amides [Murray et. al., J. Mag. Res., 2014](https://doi.org/10.1016/j.jmr.2013.12.014) and non-glycine residues (--pas 57.3 81.2 228.1) and [Straus et. al., J. Biol. NMR, 2003](https://doi.org/10.1023/A:1024098123386) for glycines (--pas_gly 45.6 66.3 211.6). CSA and DC positions are assumed to have errors of 5 ppm (--error_csa 5.0) and 0.5 kHz (--error_dc 0.5), respectively. This accounts for linewidths and errors accociated with assuming a constant shift tensore for all residues. To modify the shift tensors and errrors, the options must be explicitly stated in the command line:
+This will output three XPLOR-NIH restraint tables: [ossnmr_cs.tbl](examples/sln/input_xplor/ossnmr_cs.tbl), [ossnmr_dc.tbl](examples/sln/input_xplor/ossnmr_dc.tbl) and [ossnmr_cs_gly.tbl](examples/sln/input_xplor/ossnmr_cs_gly.tbl). Note that glycines CS are treated separately since they require a unique shift tensor. For CS restraints, the isotropic chemical shift, determined from the average of the shift tensor components, are subtracted from the oriented CS observed in SLF spectra. Oriented chemical shifts MUST be [externally referenced correctly](http://dx.doi.org/10.1016/j.ssnmr.2014.03.003). The "reduced" shift is then divided by dynamic and alignment order parameters (i.e., 0.9 * -0.5). DC value a scaled the same way. In the above command, default 15N tensor parameters are used for backbone amides [Murray et. al., J. Mag. Res., 2014](https://doi.org/10.1016/j.jmr.2013.12.014) and non-glycine residues (--pas 57.3 81.2 228.1) and [Straus et. al., J. Biol. NMR, 2003](https://doi.org/10.1023/A:1024098123386) for glycines (--pas_gly 45.6 66.3 211.6). CSA and DC positions are assumed to have errors of 5 ppm (--error_csa 5.0) and 0.5 kHz (--error_dc 0.5), respectively. This accounts for linewidths and errors associated with assuming a constant shift tensor for all residues. To modify the shift tensors and errors, the options must be explicitly stated in the command line:
 
 	python slf2xplor.py \
-       	-i ossnmr.dat \
-       	-o ossnmr \
-       	--order 0.9 \
-       	--align_order -0.5 \
-       	--pas 57.3 81.2 228.1 \
-       	--pas_gly 45.6 66.3 211.6 \
-       	--error_csa 5.0 \
-       	--error_dc 0.5
-  
+	   	-i ossnmr.dat \
+	   	-o ossnmr \
+	   	--order 0.9 \
+	   	--align_order -0.5 \
+	   	--pas 57.3 81.2 228.1 \
+	   	--pas_gly 45.6 66.3 211.6 \
+	   	--error_csa 5.0 \
+	   	--error_dc 0.5
+
 Now that we have [ossnmr_cs.tbl](examples/sln/input_xplor/ossnmr_cs.tbl), [ossnmr_dc.tbl](examples/sln/input_xplor/ossnmr_dc.tbl) and [ossnmr_cs_gly.tbl](examples/sln/input_xplor/ossnmr_cs_gly.tbl) restraint files, we are ready to do the structure calculation.
 
 
 
-#### Step 3: Running the simulated annealing calculation
+#### Step 3: Prepare restraints for helical segments
+
+	python3 fakeHelix.py \
+	   --start 6 \
+	   --stop 28 \
+	   --sequence MGINTRELFLNFTIVLITVILMWLLVRSYQY \
+	   --start_id 1 \
+	   --out_prefix sln
+
+Files [sln.dihe.tbl](examples/sln/input_xplor/sln.dihe.tbl), [sln.hbnoe.tbl](examples/sln/input_xplor/sln.hbnoe.tbl) and [sln.hbda.tbl](examples/sln/input_xplor/sln.hbda.tbl)
+
+#### Step 4: Running the simulated annealing calculation
 
 Generate an extended structure from sequence using the [pdbutil webserver](https://spin.niddk.nih.gov/bax/nmrserver/pdbutil/ext.html)
 
