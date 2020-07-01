@@ -5,7 +5,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 1 and name N )
  ( resid 1 and name HN )
- 3.036 0.300 0.300
+ 3.036 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -13,7 +13,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 2 and name N )
  ( resid 2 and name HN )
- 1.640 0.300 0.300
+ 1.640 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -21,7 +21,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 4 and name N )
  ( resid 4 and name HN )
- 0.722 0.300 0.300
+ 0.722 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -29,7 +29,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 5 and name N )
  ( resid 5 and name HN )
- 3.082 0.300 0.300
+ 3.082 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -37,7 +37,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 6 and name N )
  ( resid 6 and name HN )
- 7.724 0.300 0.300
+ 7.724 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -45,7 +45,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 7 and name N )
  ( resid 7 and name HN )
- 5.542 0.300 0.300
+ 5.542 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -53,7 +53,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 8 and name N )
  ( resid 8 and name HN )
- 2.402 0.300 0.300
+ 2.402 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -61,7 +61,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 9 and name N )
  ( resid 9 and name HN )
- 5.878 0.300 0.300
+ 5.878 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -69,7 +69,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 10 and name N )
  ( resid 10 and name HN )
- 8.633 0.300 0.300
+ 8.633 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -77,7 +77,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 11 and name N )
  ( resid 11 and name HN )
- 5.853 0.300 0.300
+ 5.853 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -85,7 +85,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 12 and name N )
  ( resid 12 and name HN )
- 4.262 0.300 0.300
+ 4.262 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -93,7 +93,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 13 and name N )
  ( resid 13 and name HN )
- 8.587 0.300 0.300
+ 8.587 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -101,7 +101,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 14 and name N )
  ( resid 14 and name HN )
- 8.998 0.300 0.300
+ 8.998 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -109,7 +109,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 15 and name N )
  ( resid 15 and name HN )
- 4.776 0.300 0.300
+ 4.776 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -117,7 +117,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 16 and name N )
  ( resid 16 and name HN )
- 6.191 0.300 0.300
+ 6.191 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -125,7 +125,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 17 and name N )
  ( resid 17 and name HN )
- 9.702 0.300 0.300
+ 9.702 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -133,7 +133,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 18 and name N )
  ( resid 18 and name HN )
- 7.440 0.300 0.300
+ 7.440 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -141,7 +141,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 19 and name N )
  ( resid 19 and name HN )
- 4.431 0.300 0.300
+ 4.431 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -149,7 +149,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 20 and name N )
  ( resid 20 and name HN )
- 7.773 0.300 0.300
+ 7.773 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -157,7 +157,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 21 and name N )
  ( resid 21 and name HN )
- 9.964 0.300 0.300
+ 9.964 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -165,7 +165,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 22 and name N )
  ( resid 22 and name HN )
- 5.958 0.300 0.300
+ 5.958 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -173,7 +173,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 23 and name N )
  ( resid 23 and name HN )
- 4.913 0.300 0.300
+ 4.913 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -181,7 +181,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 24 and name N )
  ( resid 24 and name HN )
- 8.753 0.300 0.300
+ 8.753 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -189,7 +189,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 25 and name N )
  ( resid 25 and name HN )
- 8.633 0.300 0.300
+ 8.633 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -197,7 +197,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 26 and name N )
  ( resid 26 and name HN )
- 4.811 0.300 0.300
+ 4.811 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -205,7 +205,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 27 and name N )
  ( resid 27 and name HN )
- 6.191 0.300 0.300
+ 6.191 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -213,7 +213,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 28 and name N )
  ( resid 28 and name HN )
- 9.342 0.300 0.300
+ 9.342 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -221,7 +221,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 29 and name N )
  ( resid 29 and name HN )
- 3.576 0.300 0.300
+ 3.576 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -229,7 +229,7 @@ assign
  ( resid 9999 and name Y )
  ( resid 30 and name N )
  ( resid 30 and name HN )
- 0.673 0.300 0.300
+ 0.673 0.500 0.500
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -237,4 +237,4 @@ assign
  ( resid 9999 and name Y )
  ( resid 31 and name N )
  ( resid 31 and name HN )
- 2.409 0.300 0.300
+ 2.409 0.500 0.500
