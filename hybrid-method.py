@@ -338,7 +338,7 @@ if HBDA:
 if NOE:
     dsts = PotList('NOE')
     from noePotTools import create_NOEPot
-    for (exp, file, scale) in [('noe', NOE_in, 1)]:
+    for (exp, file, scale) in [('noe', NOE, 1)]:
         NOE = create_NOEPot(exp,file,)
         NOE.setScale(scale)
         NOE.setPotType('soft')
