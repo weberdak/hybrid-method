@@ -386,148 +386,139 @@ rampedParams.append(StaticRamp("pots['VDW'].setScale(0)"))
 lowTempParams.append(StaticRamp("pots['VDW'].setScale(0)"))
     
 
-### ACCEPTANCE CRITERIA - VEGLIA ###
-def accept(pots):
-    """
-    return True if current structure meets acceptance criteria
-    """
-    if pots['DIPL']:
-        if pots['DIPL'].violations() > 3:
-            return False
-    if pots['CS']:
-        if pots['CS'].violations() > 3:
-            return False
-    if pots['CDIH']:
-        if pots['CDIH'].violations() > 2:
-            return False
-    if pots['BOND'].rms() > 0.1:
-        return False
-    if pots['ANGL'].rms() > 2:
-        return False
-    if pots['IMPR'].rms() > 4:
-        return False
-    return True
+# SET UP IVM OBJECTS (dyn, minc) THAT PERFORM DYNAMICS AND MINIMIZATION.
+# IVM (internal variable module) is used to perform dynamics and minimization in
+# both torsion-angle and Cartesian space. Bonds, angles and many impropers cannot
+# change with internal torsion-angle dynamics.
+#===============================================================================
+from ivm import IVM
+dyn = IVM()                     # IVM object for torsion-angle dynamics.
+dyn.reset()                     # reset ivm topology for torsion-angle dynamics.
+protocol.torsionTopology(dyn)
+
+minc = IVM()                    # IVM object for Cartesian minimization.
+protocol.cartesianTopology(minc)
 
 
-# Calculate structure module for folding - Veglia protocol
+# DYNAMICS SETTINGS FOR HIGH T AND ANNEALING STAGES.
+#===============================================================================
+ini_temp = 3500.0   ; fin_temp = 25.0   # Initial and final temperatures.
+protocol.massSetup()                    # Give atoms uniform weights except for axes.
+
+
+# Calculate structure module for folding - Standard protocol
 def calcOneStructure(loopInfo):
     """
     This function calculates a single structure, performs analysis on the
     structure and then writes out a pdb file with remarks.
     """        
-    # Import dynamics toolset
-    from ivm import IVM
-    from protocol import initDynamics
-    from simulationTools import AnnealIVM
-    ini_dyn  = IVM()
-    sim_cool = IVM()
-    fin_dyn  = IVM()
-    
-    protocol.torsionTopology(ini_dyn)
-    protocol.torsionTopology(fin_dyn)
-    protocol.torsionTopology(sim_cool)
-    
-    # Temperature settings
-    ini_t  = 3500   #-------- initial temp -----#
-    fin_t  = 25	    #-------- final temp -------#
-    stp_t  = 12.5   #-------- step size --------#
-
-    # Stage 1 - Initial torsion minimization
-    InitialParams(rampedParams)	       # Initialize parameters for high temp dynamics
-    setCenter(immx_com, Zpos)          # Translate selected center of mass to IMMx Zpos
-    InitialParams(highTempParams1)     # Reset some rampedParams.
-
-    # Stage 1 - Torsion angle minimization.
     # Generate initial structure and minimize.
     #===========================================================================
     # Generate initial structure by randomizing torsion angles.
     # Then set torsion angles from restraints (this shortens high T dynamics).
+    # Then set selected center of mass to membrane center (IMMx z=0).
     import monteCarlo
-    monteCarlo.randomizeTorsions(ini_dyn)
+    monteCarlo.randomizeTorsions(dyn)
     protocol.fixupCovalentGeom(maxIters=100, useVDW=1)
+    import torsionTools
     if DIHE:
         import torsionTools
         torsionTools.setTorsionsFromTable(DIHE)
-        
-    protocol.initMinimize(ini_dyn,
+    
+    InitialParams(rampedParams)     # parameters for SA.
+    InitialParams(highTempParams1)  # reset some rampedParams.
+    setCenter(immx_com, Zpos)        # Translate selected center of mass to IMMx Zpos.
+
+    # Torsion angle minimization.
+    protocol.initMinimize(dyn,
                           potList=pots,
                           numSteps=100,
                           printInterval=50)
-    ini_dyn.run()
-    
-    # Stage 2 - High temperature torsion dynamics
+    dyn.run()
 
-    # Phase in EEFX step 1
-    protocol.initDynamics(ini_dyn,
+    
+    # High temperature dynamics.
+    #===========================================================================
+    # High temperature dynamics stage 1.
+    protocol.initDynamics(dyn,
                           potList=pots,         # potential terms to use.
-                          bathTemp=ini_t,       # set bath temperature.
+                          bathTemp=ini_temp,    # set bath temperature.
                           initVelocities=1,     # uniform initial velocities.
                           finalTime=3,          # run for finalTime or
                           numSteps=3001,        # numSteps * 0.001, whichever is less.
                           printInterval=100)    # printing rate in steps.
-    ini_dyn.setETolerance(ini_t/100)             # used to det. stepsize, dflt [temp/1000].
-    ini_dyn.run()
-
-    # Phase in EEFX step 2
+    dyn.setETolerance(ini_temp/100)             # used to det. stepsize, dflt [temp/1000].
+    dyn.run()
+    
+    # High temperature dynamics stage 2.
     InitialParams(highTempParams2)    
     setCenter(immx_com, Zpos)            # translate selected center of mass to IMMx Zpos.
-    protocol.initDynamics(ini_dyn,
+    protocol.initDynamics(dyn,
                           potList=pots,         # potential terms to use.
-                          bathTemp=ini_t,       # set bath temperature.
+                          bathTemp=ini_temp,    # set bath temperature.
                           initVelocities=1,     # uniform initial velocities.
                           finalTime=3,          # run for finalTime or
                           numSteps=3001,        # numSteps * 0.001, whichever is less.
                           printInterval=100)    # printing rate in steps.
-    ini_dyn.setETolerance(ini_t/100)             # used to det. stepsize, dflt [temp/1000].
-    ini_dyn.run()
+    dyn.setETolerance(ini_temp/100)             # used to det. stepsize, dflt [temp/1000].
+    dyn.run()
 
-    # High temperature dynamics full EEFX
-    setCenter(immx_com, Zpos)             # translate selected center of mass to IMMx Zpos.    
+    # High temperature dynamics stage 3.
     InitialParams(highTempParams)
-    protocol.initDynamics(ini_dyn,
-                          potList=pots,      # potential terms to use.
-                          bathTemp=ini_t,    # set bath temperature.
-                          initVelocities=1,  # uniform initial velocities.
-                          finalTime=20,	     # run for finalTime or
-                          numSteps=20001,    # numSteps * 0.001, whichever is less.
-                          printInterval=500) # printing rate in steps.
-    ini_dyn.setETolerance(ini_t/100)          # used to det. stepsize, dflt [temp/1000].
-    ini_dyn.run()
+    setCenter(immx_com, Zpos)            # translate selected center of mass to IMMx Zpos.
+    protocol.initDynamics(dyn,
+                          potList=pots,         # potential terms to use.
+                          bathTemp=ini_temp,    # set bath temperature.
+                          initVelocities=1,     # uniform initial velocities.
+                          finalTime=26,			# run for finalTime or
+                          numSteps=26001,		# numSteps * 0.001, whichever is less.
+                          printInterval=100)    # printing rate in steps.
+    dyn.setETolerance(ini_temp/100)             # used to det. stepsize, dflt [temp/1000].
+    dyn.run()
 
-    # Stage 3 - Simulated annealing
-    setCenter(immx_com, Zpos)             # translate selected center of mass to IMMx Zpos.
-    InitialParams(rampedParams)
-    cool = AnnealIVM(ivm           = sim_cool,
- 		     initTemp      = ini_t,
-                     finalTemp     = fin_t,
-                     tempStep      = stp_t,
-		     rampedParams  = rampedParams)
-    protocol.initDynamics(ivm	        = sim_cool,
-			  potList	= pots,
-			  finalTime	= 0.2,
-			  numSteps	= 201,
-			  printInterval = 100)
-    cool.run()
     
-    # Stage 4 - Low temperature torsion dynamics
-    InitialParams(lowTempParams)
-    protocol.initDynamics(ivm            = fin_dyn,
-                          potList        = pots, 
-                          bathTemp       = fin_t,
-                          initVelocities = 1,
-                          finalTime      = 20,           
-                          numSteps       = 20000, 	  
-                          printInterval  = 3000)
-    fin_dyn.setETolerance( fin_t/10 )   
-    fin_dyn.run()
+    # Initialize integrator and loop for simulated annealing and run.
+    #===========================================================================
+    # Dynamics for annealing.
+    setCenter(immx_com, Zpos)            # translate selected center of mass to IMMx Zpos.
+    protocol.initDynamics(dyn,
+                          potList=pots,
+                          finalTime=0.4,        # run for finalTime or
+                          numSteps=201,         # numSteps*0.001, whichever is less.
+                          printInterval=100)    
 
-    # Stage 5 - Powell torsion angle minimization
-    protocol.initMinimize(ivm	= fin_dyn,
-			  potList	= pots,
-			  printInterval	= 500)
-    fin_dyn.run()
+    # Set up cooling loop and run.
+    from simulationTools import AnnealIVM
+    AnnealIVM(initTemp=ini_temp,
+                       finalTemp=fin_temp,
+                       tempStep=12.5,
+                       ivm=dyn,
+                       rampedParams=rampedParams
+                       ).run()
+
+    
+    # Final minimization.
+    #===========================================================================
+    # Torsion angle minimization.
+    protocol.initMinimize(dyn,
+                          numSteps=500,         # dflt [500 steps]
+                          potList=pots,
+                          printInterval=50)
+    dyn.run()
+
+    # Final Cartesian minimization.
+    protocol.initMinimize(minc,
+                          numSteps=500,         # dflt [500 steps]
+                          potList=pots,
+                          dEPred=10)
+    minc.run()
+
+    # Recenter coordinates in XY plane.
+    setCenterXY()                       # translate protein coordinates to XY center.
+    
+    # Do analysis and write structure when this routine is finished.
     pass
-
+    
 
 # Loop control for folding stage
 from simulationTools import StructureLoop, FinalParams
