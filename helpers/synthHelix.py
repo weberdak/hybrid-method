@@ -1,23 +1,23 @@
-# fakeHelix.py
+# synthHelix.py
 # ------------
 # Write DIHE, NOE and HBDA restraint files for a specified helical segment.
 #
 # Example Usage
 # -------------
-# python3 fakeHelix.py --start 6 --stop 28 \
+# python3 synthHelix.py --start 6 --stop 28 \
 #    --sequence MGINTRELFLNFTIVLITVILMWLLVRSYQY --start_id 1 --out_prefix sln
 #
 # Will write dihedral (sln.dihe.tbl), noe (sln.hbnoe.tbl) and hydrogen bond (sln.hbda.tbl)
 # restraint files. Flags --sequence, --start_id (default 1) and --out_prefix (default fakeHelix)
 # are optional. The --sequence input is required if prolines are to be ignored.
 #
-# Written by Daniel Weber, Veglia Lab
-# Last revised June 30 2020
+# Written by Daniel Weber, Veglia Lab, University of Minnesota
+# Last revised July 3 2020
 
 import argparse
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Generate artificial phi/psi backbone dihedral restraints for XPLOR-NIH.',
+    parser = argparse.ArgumentParser(description='Generate artificial helix restraints for XPLOR-NIH.',
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument(
         '--start', type=int,
@@ -29,7 +29,7 @@ def parse_args():
     )
     parser.add_argument(
         '--out_prefix', type=str,
-        help='Output prefix of restraint files.', default='fakeHelix'
+        help='Output prefix of restraint files.', default='synthHelix'
     )
     parser.add_argument(
         '--sequence', type=str,
@@ -79,13 +79,13 @@ def main():
             # Check sequence for prolines
             if args.sequence:
                 if d[i] != 'P':
-                    f_n.write('assign (resid {} and name N)(resid {} and name O) 2.00 0.1 0.1\n'.format(i,i-4))
+                    f_n.write('assign (resid {} and name HN)(resid {} and name O) 2.06 0.1 0.1\n'.format(i,i-4))
                     f_h.write('assign (resid {} and name N)(resid {} and name HN) (resid {} and name O)\n'.format(i,i,i-4))
                 else:
                     print('Skipping residue {}{}'.format(d[i],i))
             # Sequence not specified, don't bother checking
             else:
-                f_n.write('assign (resid {} and name N)(resid {} and name O) 2.00 0.1 0.1\n'.format(i,i-4))
+                f_n.write('assign (resid {} and name HN)(resid {} and name O) 2.06 0.1 0.1\n'.format(i,i-4))
                 f_h.write('assign (resid {} and name N)(resid {} and name HN) (resid {} and name O)\n'.format(i,i,i-4))
 
     f.close()
