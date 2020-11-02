@@ -1,4 +1,4 @@
-# REFINE MEMBRANE PROTEIN STRUCTURE WITH OS-ssNMR CSA AND DC RESTRAINTS - INITIAL FOLDING PROTOCOL
+# REFINE MEMBRANE PROTEIN STRUCTURE WITH OS-ssNMR CSA AND DC RESTRAINTS - FINAL REFINEMENT PROTOCOL
 # Written by D. K. Weber, Veglia Lab (last revised Nov 1 2020)
 #
 # DESCRIPTION
@@ -13,15 +13,12 @@
 # The template in the XPLOR-NIH tutorials (eefx-membrane) was used predominantly, but modified
 # to used DC/CSA restraints according to Veglia lab preferences.
 #
-# 0. Input either a folded or extended-state PDB structure.
+# 0. Input a low-energy structure output from the hybrid-method.py protocol
 # 1. Initial torsion angle minimization (500 steps)
-# 2. Center protein to membrane then high temperature torsion dynamics with REPEL force field (3500 K for 3 ps, 3000 steps)
-# 3. Center protein then high temperature torsions dynamics phasing in EEFx parameters (3500 K for 3 ps, 3000 steps)
-# 4. Center protein then high temperature torsion dynamics with only EEFx paramters (3500 K for 26 ps, 26000 steps)
-# 5. Center protein again then simulated annealing (3500 K to 25 K in 12.5 K steps, 0.2 ps/200 steps per increment)
-# 6. Low temperature torsion dynamics (25 K for 15 ps, 15000 steps)
-# 7. Powell torsion angle minimization (500 steps)
-# 8. Powell Cartesian minimization (500 steps)
+# 2. Center protein to membrane then high temperature torsion dynamics (350 K for 1 ps, 1000 steps)
+# 3. Center protein again then simulated annealing (350 K to 2.5 K in 1.25 K steps, 0.2 ps/200 steps per increment)
+# 4. Powell torsion angle minimization (500 steps)
+# 5. Powell Cartesian minimization (500 steps)
 
 xplor.requireVersion('3.0')
 import protocol
@@ -30,7 +27,7 @@ import numpy as np
 
 # Argument Parser
 def parse_args():
-    parser = argparse.ArgumentParser(description='Initial folding for membrane protein structure.',
+    parser = argparse.ArgumentParser(description='Final refinement for membrane protein structure determination.',
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument(
         '--structure_in', type=str,
@@ -313,7 +310,6 @@ lowTempParams.append(StaticRamp("pots['BOND'].setScale(fin_bond)"))
 lowTempParams.append(StaticRamp("pots['ANGL'].setScale(fin_angl)"))
 lowTempParams.append(StaticRamp("pots['IMPR'].setScale(fin_impr)"))
 
-
 # Set threshold for violations of PotList terms
 pots['BOND'].setThreshold(0.05)     # dflt [0.05]
 pots['ANGL'].setThreshold(5.00)     # dflt [2.0]
@@ -368,7 +364,6 @@ highTempParams.append(StaticRamp("eefx.setScale(0.004)"))
 rampedParams.append(MultRamp(0.004,1.0,"eefx.setScale(VALUE)"))
 lowTempParams.append(StaticRamp("eefx.setScale(1.0)"))
 
-
 # EzPot
 #Ez_pots = []
 #from membraneTools import EzPot
@@ -377,6 +372,7 @@ lowTempParams.append(StaticRamp("eefx.setScale(1.0)"))
 #Ezt.setXYCenter(0)
 #Ezt.setThickness(immx_thickness)
 #Ez_pots.append(Ezt)
+
 
 # Initialize REPEL if EEFX not used - XPLOR-NIH Tutorial Settings - eefx-membrane
 pots.append(XplorPot('VDW'))          # dflt scale [1]
@@ -410,7 +406,7 @@ protocol.cartesianTopology(minc)
 
 # DYNAMICS SETTINGS FOR HIGH T AND ANNEALING STAGES.
 #===============================================================================
-ini_temp = 3500.0   ; fin_temp = 25.0  ; step_temp = 12.5  # Initial and final temperatures.
+ini_temp = 350.0   ; fin_temp = 2.5  ; step_temp = 1.25  # Initial and final temperatures.
 protocol.massSetup()                    # Give atoms uniform weights except for axes.
 
 
@@ -448,28 +444,28 @@ def calcOneStructure(loopInfo):
     # High temperature dynamics.
     #===========================================================================
     # High temperature dynamics stage 1.
-    protocol.initDynamics(dyn,
-                          potList=pots,         # potential terms to use.
-                          bathTemp=ini_temp,    # set bath temperature.
-                          initVelocities=1,     # uniform initial velocities.
-                          finalTime=3,          # run for finalTime or
-                          numSteps=3001,        # numSteps * 0.001, whichever is less.
-                          printInterval=100)    # printing rate in steps.
-    dyn.setETolerance(ini_temp/100)             # used to det. stepsize, dflt [temp/1000].
-    dyn.run()
+    #protocol.initDynamics(dyn,
+    #                      potList=pots,         # potential terms to use.
+    #                      bathTemp=ini_temp,    # set bath temperature.
+    #                      initVelocities=1,     # uniform initial velocities.
+    #                      finalTime=3,          # run for finalTime or
+    #                      numSteps=3001,        # numSteps * 0.001, whichever is less.
+    #                     printInterval=100)    # printing rate in steps.
+    #dyn.setETolerance(ini_temp/100)             # used to det. stepsize, dflt [temp/1000].
+    #dyn.run()
     
     # High temperature dynamics stage 2.
-    InitialParams(highTempParams2)    
-    setCenter(immx_com, Zpos)            # translate selected center of mass to IMMx Zpos.
-    protocol.initDynamics(dyn,
-                          potList=pots,         # potential terms to use.
-                          bathTemp=ini_temp,    # set bath temperature.
-                          initVelocities=1,     # uniform initial velocities.
-                          finalTime=3,          # run for finalTime or
-                          numSteps=3001,        # numSteps * 0.001, whichever is less.
-                          printInterval=100)    # printing rate in steps.
-    dyn.setETolerance(ini_temp/100)             # used to det. stepsize, dflt [temp/1000].
-    dyn.run()
+    #InitialParams(highTempParams2)    
+    #setCenter(immx_com, Zpos)            # translate selected center of mass to IMMx Zpos.
+    #protocol.initDynamics(dyn,
+    #                      potList=pots,         # potential terms to use.
+    #                      bathTemp=ini_temp,    # set bath temperature.
+    #                      initVelocities=1,     # uniform initial velocities.
+    #                      finalTime=3,          # run for finalTime or
+    #                      numSteps=3001,        # numSteps * 0.001, whichever is less.
+    #                      printInterval=100)    # printing rate in steps.
+    #dyn.setETolerance(ini_temp/100)             # used to det. stepsize, dflt [temp/1000].
+    #dyn.run()
 
     # High temperature dynamics stage 3.
     InitialParams(highTempParams)
@@ -478,8 +474,8 @@ def calcOneStructure(loopInfo):
                           potList=pots,         # potential terms to use.
                           bathTemp=ini_temp,    # set bath temperature.
                           initVelocities=1,     # uniform initial velocities.
-                          finalTime=26,		# run for finalTime or
-                          numSteps=26001,	# numSteps * 0.001, whichever is less.
+                          finalTime=1,		# run for finalTime or
+                          numSteps=1001,	# numSteps * 0.001, whichever is less.
                           printInterval=100)    # printing rate in steps.
     dyn.setETolerance(ini_temp/100)             # used to det. stepsize, dflt [temp/1000].
     dyn.run()
@@ -522,16 +518,16 @@ def calcOneStructure(loopInfo):
     #m.run()
 
     # Low temperature torsion dynamics
-    InitialParams(lowTempParams)
-    protocol.initDynamics(dyn,
-                          potList=pots,         # potential terms to use.
-                          bathTemp=fin_temp,    # set bath temperature.
-                          initVelocities=1,     # uniform initial velocities.
-                          finalTime=15,	        # run for finalTime or
-                          numSteps=15000,	# numSteps * 0.001, whichever is less.
-                          printInterval=3000)   # printing rate in steps.
-    dyn.setETolerance(fin_temp/100)             # used to det. stepsize, dflt [temp/1000].
-    dyn.run()
+    #InitialParams(lowTempParams)
+    #protocol.initDynamics(dyn,
+    #                      potList=pots,         # potential terms to use.
+    #                      bathTemp=fin_temp,    # set bath temperature.
+    #                      initVelocities=1,     # uniform initial velocities.
+    #                      finalTime=15,	        # run for finalTime or
+    #                     numSteps=15000,	# numSteps * 0.001, whichever is less.
+    #                     printInterval=3000)   # printing rate in steps.
+    #dyn.setETolerance(fin_temp/100)             # used to det. stepsize, dflt [temp/1000].
+    #dyn.run()
 
     # Final minimization.
     #===========================================================================
