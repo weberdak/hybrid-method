@@ -177,3 +177,25 @@ It should also be emphasized that all restraints (DC_NH, CSA_N1, CSA_N1_gly, HBD
 
 The protocol will produce 512 structures
 
+
+#### Step 6: Refinement
+
+	xplor -py -smp 4 -o logfile.out hybrid-method-refine.py \
+	  --structure_in      input_xplor/hybrid-method_327.sa \
+	  --DC_NH             input_xplor/ossnmr_dc.tbl \
+	  --CSA_N1            input_xplor/ossnmr_cs.tbl \
+	  --CSA_N1_gly        input_xplor/ossnmr_cs_gly.tbl \
+	  --HBDA              "" \
+	  --NOE               "" \
+	  --DIHE              input_xplor/iso_shifts.tbl \
+	  --DC_NH_max         10.735 \
+	  --nstructures       100 \
+	  --CSA_N1_tensor     57.3 81.2 228.1 \
+	  --CSA_N1_tensor_gly 45.6 66.3 211.6 \
+	  --CSA_N1_beta       -17.0 \
+	  --CSA_N1_beta_gly   -21.6 \
+	  --tm_domain         7 26 \
+	  --immx_thickness    25.8 \
+	  --immx_nparameter   10 \
+	  --w_slf             5 \
+	  --w_r               3
