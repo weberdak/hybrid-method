@@ -180,13 +180,15 @@ The protocol will produce 512 structures
 
 #### Step 6: Refinement
 
-	xplor -py -smp 4 -o logfile.out hybrid-method-refine.py \
-	  --structure_in      input_xplor/hybrid-method_327.sa \
+	#!/bin/bash -l
+	
+	xplor -py -smp 4 -o logfile.out hybrid-method.py \
+	  --structure_in      input_xplor/hybrid-method_326.sa \
 	  --DC_NH             input_xplor/ossnmr_dc.tbl \
 	  --CSA_N1            input_xplor/ossnmr_cs.tbl \
 	  --CSA_N1_gly        input_xplor/ossnmr_cs_gly.tbl \
-	  --HBDA              "" \
-	  --NOE               "" \
+	  --HBDA              input_xplor/sln.hbda.tbl \
+	  --NOE               input_xplor/sln.hbnoe.tbl \
 	  --DIHE              input_xplor/iso_shifts.tbl \
 	  --DC_NH_max         10.735 \
 	  --nstructures       100 \
@@ -199,3 +201,11 @@ The protocol will produce 512 structures
 	  --immx_nparameter   10 \
 	  --w_slf             5 \
 	  --w_r               3
+	
+	# Mark best structures and move to folder
+	getBest -num 10 -symlinks
+	rm -rf output_files
+	mkdir output_files
+	mv *.sa* output_files/
+	mv logfile* output_files/
+
