@@ -1,11 +1,11 @@
 #!/bin/bash -l
-#PBS -l walltime=12:00:00,nodes=1:ppn=16,mem=2gb 
+#PBS -l walltime=12:00:00,nodes=1:ppn=24,mem=2gb 
 #PBS -m abe
 #PBS -M dweber@umn.edu
 
-cd /home/vegliag/dweber/xplor_data/20200701_HybridMethodTest_SLN
+cd /home/vegliag/dweber/xplor_data/20201101_SLN_TEST
 
-xplor -py -smp 16 -o logfile.out hybrid-method.py \
+xplor -py -smp 24 -o logfile.out hybrid-method.py \
       --structure_in      input_xplor/sln_ext.pdb \
       --DC_NH             input_xplor/ossnmr_dc.tbl \
       --CSA_N1            input_xplor/ossnmr_cs.tbl \
@@ -19,7 +19,7 @@ xplor -py -smp 16 -o logfile.out hybrid-method.py \
       --CSA_N1_tensor_gly 45.6 66.3 211.6 \
       --CSA_N1_beta       -17.0 \
       --CSA_N1_beta_gly   -21.6 \
-      --tm_domain         6 28 \
+      --tm_domain         7 26 \
       --immx_thickness    25.8 \
       --immx_nparameter   10 \
       --w_slf             5 \

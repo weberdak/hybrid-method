@@ -14,7 +14,7 @@ xplor -py -smp 4 -o logfile.out hybrid-method.py \
       --CSA_N1_tensor_gly 45.6 66.3 211.6 \
       --CSA_N1_beta       -17.0 \
       --CSA_N1_beta_gly   -21.6 \
-      --tm_domain         6 28 \
+      --tm_domain         7 26 \
       --immx_thickness    25.8 \
       --immx_nparameter   10 \
       --w_slf             5 \
