@@ -182,7 +182,7 @@ The protocol will produce 512 structures
 
 	#!/bin/bash -l
 	
-	xplor -py -smp 4 -o logfile.out hybrid-method.py \
+	xplor -py -smp 4 -o logfile.out hybrid-method-refine.py \
 	  --structure_in      input_xplor/hybrid-method_326.sa \
 	  --DC_NH             input_xplor/ossnmr_dc.tbl \
 	  --CSA_N1            input_xplor/ossnmr_cs.tbl \
