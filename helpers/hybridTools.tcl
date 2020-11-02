@@ -1,7 +1,7 @@
 # hybridTools.tcl
 # ---------------
 # A VMD function to align and analyze helix topology.
-# Written by D. K. Weber (last revised June 7 2020)
+# Written by D. K. Weber (last revised Jul 3 2020)
 #
 # Features
 # --------
