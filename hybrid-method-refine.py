@@ -14,7 +14,7 @@
 # to used DC/CSA restraints according to Veglia lab preferences.
 #
 # 0. Input a low-energy structure output from the hybrid-method.py protocol
-# 1. Initial torsion angle minimization (500 steps)
+# 1. Initial torsion angle minimization (100 steps)
 # 2. Center protein to membrane then high temperature torsion dynamics (350 K for 1 ps, 1000 steps)
 # 3. Center protein again then simulated annealing (350 K to 2.5 K in 1.25 K steps, 0.2 ps/200 steps per increment)
 # 4. Powell torsion angle minimization (500 steps)

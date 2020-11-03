@@ -14,7 +14,7 @@
 # to used DC/CSA restraints according to Veglia lab preferences.
 #
 # 0. Input either a folded or extended-state PDB structure.
-# 1. Initial torsion angle minimization (500 steps)
+# 1. Initial torsion angle minimization (100 steps)
 # 2. Center protein to membrane then high temperature torsion dynamics with REPEL force field (3500 K for 3 ps, 3000 steps)
 # 3. Center protein then high temperature torsions dynamics phasing in EEFx parameters (3500 K for 3 ps, 3000 steps)
 # 4. Center protein then high temperature torsion dynamics with only EEFx paramters (3500 K for 26 ps, 26000 steps)
