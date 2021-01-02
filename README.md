@@ -1,8 +1,12 @@
 # hybrid-method
 
-Workflow for calculating membrane protein structures using isotropic and anisotropic NMR restraints. 
+Work flow for calculating membrane protein structures using isotropic and anisotropic NMR restraints. 
 
 ## Description
+
+For a brief introduction to combining oriented sample solid-state NMR (OS-ssNMR) and isotropic restraints from solution or MAS-ssNMR, please read/cite our new book chapter:
+
+Weber, D. K., Larsen, E. K., Gopinath, T., & Veglia, G. (2020). Chapter 12: Hybridizing isotropic and anisotropic solid-state NMR restraints for membrane protein structure determination. In F. Separovic & M.-A. Sani (Eds.), *Solid-State NMR*. IOP Publishing. https://doi.org/10.1088/978-0-7503-2532-5ch12
 
 This repository details a protocol to determine the structure and topology of membrane proteins by hybridizing isotropic and anisotropic NMR restraints into XPLOR-NIH simulated annealing calculations. The protocol has been updated from our previous versions ([Shi et. al., J. Biol. NMR, 2009](https://doi.org/10.1007/s10858-009-9328-9) and [Mote et al., J. Biol. NMR, 2013](http://link.springer.com/10.1007/s10858-013-9766-2)) top incorporate new functions and force fields that have since been built into XPLOR-NIH. This protocol has also been designed for users who are not expert users of XPLOR-NIH and includes the following features:
 
@@ -143,7 +147,7 @@ Now that all of the restraint tables and input files have been prepared, we are 
 	mv *.sa* output_files/
 	mv logfile* output_files/
 
-which is run from a BASH terminal by:
+which is run from a Bash terminal by:
 
 	bash hybrid-method_local.sh
 
@@ -151,9 +155,9 @@ The progress of the calculation can be followed using the tail command:
 
 	tail -f logfile.out
 
-Running the Hybrid Method from this shell script allows us to avoid the having to edit the hybrid-method.py program, which requires a reasonable understanding of both XPLOR-NIH and Python scripting. Although, the line "xplor.requireVersion('3.0')" will have to be modified if a different version of XPLOR-NIH is installed. This generic method is very well suited as quick-start/introductory approach to solving structure/topology of simple single-pass helical membrane proteins. However, if more complicated systems are to be solved, such as multi-pass proteins, beta-barrels and oligomers, the hybrid-method.py and BASH scripts will have to be edited/developed further.
+Running this shell script allows us to avoid the having to edit the hybrid-method.py program, which requires a good understanding of both XPLOR-NIH and Python scripting. Although, the line "xplor.requireVersion('3.0')" will have to be modified if a different version of XPLOR-NIH is installed. This generic method is very well suited as quick-start/introductory approach to solving structure/topology of simple single-pass helical membrane proteins. However, if more complicated systems are to be solved, such as multi-pass proteins, beta-barrels and oligomers, the hybrid-method.py and Bash scripts will have to be edited/developed further.
 
-It should also be emphasized that all restraints (DC_NH, CSA_N1, CSA_N1_gly, HBDA, NOE and DIHE) are completely optional. If these restraints are not available, then simply using "" in place of the file paths. For example, the following will not apply NOE or hydrogen bonding restraints:
+It should also be emphasized that all restraints (DC_NH, CSA_N1, CSA_N1_gly, HBDA, NOE and DIHE) are completely optional. If these restraints are not available, then simply put "" in place of the file paths. For example, the following will not apply NOE or hydrogen bonding restraints:
 
 	xplor -py -smp 4 -o logfile.out hybrid-method.py \
 	  --structure_in      input_xplor/sln_ext.pdb \
@@ -175,10 +179,29 @@ It should also be emphasized that all restraints (DC_NH, CSA_N1, CSA_N1_gly, HBD
 	  --w_slf             5 \
 	  --w_r               3
 
-The protocol will produce 512 structures
+The basic protocol is taken from [Tian et al., Biophys. J., 2015](https://doi.org/10.1016/j.bpj.2015.06.047) and applies EEFx force field and IMMx implicit membrane developed by the Marassi Lab. The membrane hydrophobic thickness is specified by "--immx_thickness", which for this example is set to the thickness of a DMPC/POPC (3:1 molar ratio) bicelle (25.8 angstroms) as taken from the weighted averages of DMPC and POPC (= 25.4 x 0.75 + 27.0 x 0.25). See p. 379 of the [Handbook of Lipid Bilayers - 2nd Edition](https://books.google.com/books?hl=en&lr=&id=JgnLBQAAQBAJ&oi=fnd&pg=PP1&dq=Marsh,+Handbook+of+lipid+bilayers&ots=t_vN1All4R&sig=yQdbT7LruGwNszFa586dCV1WPX4#v=onepage&q=Marsh%2C%20Handbook%20of%20lipid%20bilayers&f=false) (Marsh, 2013). The maximum NH dipolar coupling (--DC_NH) is set to the default 10.735 kHz ([Denny et al., J. Mag. Res, 2001](https://doi.org/10.1006/jmre.2001.2405)). The principal axis system (PAS) of the non-glycine chemical shift tensor is set the default  delta11 = 57.3 ppm, delta22 = 81.2 ppm, delta33 = 228.1 ppm ([Murray et al., J. Mag. Res., 2014](http://dx.doi.org/10.1016/j.jmr.2013.12.014)), and the glycine PAS delta11 = 45.6 ppm, delta22 = 66.3 ppm, delta33 = 211.6 ppm ([Straus et al., J. Biol. NMR, 2003](https://doi.org/10.1023/A:1024098123386)). Note that the 15N PAS components will be automatically converted to the XPLOR-NIH input format. The beta values are set to default values of -17.0 and -21.6 degrees as per the above references. Due to the right-hand rule, beta values for the 15N PAS are negative. 
+
+The immx_nparameter...
+
+The protocol will produce 512 structures (--nstructures).
+
+
+
+0. Input either a folded or extended-state PDB structure.
+1. Initial torsion angle minimization (100 steps)
+2. Center protein to membrane (--tm_domain) then high temperature torsion dynamics with REPEL force field (3500 K for 3 ps, 3000 steps)
+3. Center protein then high temperature torsions dynamics phasing in EEFx parameters (3500 K for 3 ps, 3000 steps)
+4. Center protein then high temperature torsion dynamics with only EEFx parameters (3500 K for 26 ps, 26000 steps)
+5. Center protein again then simulated annealing (3500 K to 25 K in 12.5 K steps, 0.2 ps/200 steps per increment)
+6. Low temperature torsion dynamics (25 K for 15 ps, 15000 steps)
+7. Powell torsion angle minimization (500 steps)
+8. Powell Cartesian minimization (500 steps)
+
 
 
 #### Step 6: Refinement
+
+For the next stage, 
 
 	#!/bin/bash -l
 	
