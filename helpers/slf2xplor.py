@@ -3,7 +3,7 @@ import argparse
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Initial folding for membrane protein structure.',
+    parser = argparse.ArgumentParser(description='Preparation of CSA and DC restraints for XPLOR-NIH.',
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument(
         '-i', '--infile', type=str,
