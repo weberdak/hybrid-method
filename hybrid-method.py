@@ -1,5 +1,5 @@
 # REFINE MEMBRANE PROTEIN STRUCTURE WITH OS-ssNMR CSA AND DC RESTRAINTS - INITIAL FOLDING PROTOCOL
-# Written by D. K. Weber, Veglia Lab (last revised Nov 1 2020)
+# Written by D. K. Weber, Veglia Lab (last revised Jan 31 2021)
 #
 # DESCRIPTION
 # -----------
@@ -37,16 +37,28 @@ def parse_args():
         help='Starting structure (PDB file)'
     )
     parser.add_argument(
-        '--DC_NH', type=str,
-        help='DC restraints table. Default: None', default=''
+        '--DC_NH_work', type=str,
+        help='DC restraints table - forces applied. Default: None', default=''
     )
     parser.add_argument(
-        '--CSA_N1', type=str,
-        help='CSA restraints table. Default: None', default=''
+        '--DC_NH_free', type=str,
+        help='DC restraints table - back-calculated without forces applied. Default: None', default=''
     )
     parser.add_argument(
-        '--CSA_N1_gly', type=str,
-        help='CSA restraints table for glycines. Default: None', default=''
+        '--CSA_N1_work', type=str,
+        help='CSA restraints table - forces applied. Default: None', default=''
+    )
+    parser.add_argument(
+        '--CSA_N1_free', type=str,
+        help='CSA restraints table - back-calculated without forces applied. Default: None', default=''
+    )
+    parser.add_argument(
+        '--CSA_N1_gly_work', type=str,
+        help='CSA restraints table for glycines - forces applied. Default: None', default=''
+    )
+    parser.add_argument(
+        '--CSA_N1_gly_free', type=str,
+        help='CSA restraints table for glycines - back-calculated without forces applied. Default: None', default=''
     )
     parser.add_argument(
         '--DIHE', type=str,
@@ -85,7 +97,7 @@ def parse_args():
     )
     parser.add_argument(
         '--immx_thickness', type=float,
-        help='IMMx Membrane thickness. Default: 25.8 (DMPC/POPC bicelle)', default=25.8
+        help='IMMx Membrane thickness. Default: 25.72 (DMPC/POPC bicelle)', default=25.72
     )
     parser.add_argument(
         '--immx_nparameter', type=int,
@@ -121,9 +133,12 @@ seed = 3421                            # Random seed
 
 # Input files
 structure_in = args.structure_in
-DC_NH  = args.DC_NH
-CSA_N1 = args.CSA_N1
-CSA_N1_gly = args.CSA_N1_gly
+DC_NH_work  = args.DC_NH_work
+DC_NH_free  = args.DC_NH_free
+CSA_N1_work = args.CSA_N1_work
+CSA_N1_free = args.CSA_N1_free
+CSA_N1_gly_work = args.CSA_N1_gly_work
+CSA_N1_gly_free = args.CSA_N1_gly_free
 DIHE = args.DIHE
 NOE = args.NOE
 HBDA = args.HBDA
@@ -208,10 +223,10 @@ oTensor.setRh(0)
 dc_tensor['amide_NH'] = oTensor
 
 # Load working DC restraints if specified
-if DC_NH:
+if DC_NH_work:
     dc = PotList('DIPL')
     from rdcPotTools import create_RDCPot
-    for (name, file, tensor, scale) in [('amide_NH', DC_NH, dc_tensor['amide_NH'], 1)]:
+    for (name, file, tensor, scale) in [('amide_NH_work', DC_NH_work, dc_tensor['amide_NH'], 1)]:
         DIPL=create_RDCPot(name=name, file=file, oTensor=tensor)
         DIPL.setScale(scale)
         DIPL.setShowAllRestraints(True)
@@ -229,6 +244,28 @@ if DC_NH:
         t.setFreedom( "fixDa, fixRh, fixAxis" )
         pass
 
+# Load free DC restraints if specified
+if DC_NH_free:
+    dc = PotList('DIPL')
+    from rdcPotTools import create_RDCPot
+    for (name, file, tensor, scale) in [('amide_NH_free', DC_NH_free, dc_tensor['amide_NH'], 1)]:
+        DIPL=create_RDCPot(name=name, file=file, oTensor=tensor)
+        DIPL.setScale(scale)
+        DIPL.setShowAllRestraints(True)
+        DIPL.setUseSign(False)
+        DIPL.setThreshold(0.01)
+        DIPL.setPotType('square')
+        dc.append(DIPL)
+        pass
+    pots.append(dc)
+    #highTempParams.append(StaticRamp("dc.setScale(ini_dc)"))
+    rampedParams.append(MultRamp(0, 0, "dc.setScale(VALUE)"))
+    lowTempParams.append(StaticRamp("dc.setScale(0)"))
+    
+    for t in dc_tensor.values():
+        t.setFreedom( "fixDa, fixRh, fixAxis" )
+        pass
+    
 
 ### CSA RESTRAINTS ###
 
@@ -244,18 +281,26 @@ csa_tensor['amide_N'] = oTensor
 # Load working CSA restraints if specified
 
 ### DEVELOPMENT SECTION
-# Add more CSA tensors here if need. Ensure AtomOrder is corrent in tbl file.
-CSA_all = []
-if CSA_N1:
-    CSA_all.append(('amide_N1', CSA_N1, CSA_N1_tensor, CSA_N1_beta, 1))
-if CSA_N1_gly:
-    CSA_all.append(('amide_N1_gly', CSA_N1_gly, CSA_N1_tensor_gly, CSA_N1_beta_gly, 1))
+
+# Add more CSA tensors here if need. Ensure AtomOrder is correct in tbl file.
+CSA_all_work = []
+if CSA_N1_work:
+    CSA_all_work.append(('amide_N1_work', CSA_N1_work, CSA_N1_tensor, CSA_N1_beta, 1))
+if CSA_N1_gly_work:
+    CSA_all_work.append(('amide_N1_gly_work', CSA_N1_gly_work, CSA_N1_tensor_gly, CSA_N1_beta_gly, 1))
+    
+CSA_all_free = []
+if CSA_N1_free:
+    CSA_all_free.append(('amide_N1_free', CSA_N1_free, CSA_N1_tensor, CSA_N1_beta, 1))
+if CSA_N1_gly_free:
+    CSA_all_free.append(('amide_N1_gly_free', CSA_N1_gly_free, CSA_N1_tensor_gly, CSA_N1_beta_gly, 1))
+
 ### END DEVELOPMENT SECTION
 
-if CSA_all:
+if CSA_all_work:
     csa = PotList('CS')
     from csaPotTools import create_CSAPot
-    for (name, file, atom_sigma, ang_b, scale) in CSA_all:
+    for (name, file, atom_sigma, ang_b, scale) in CSA_all_work:
         CS=create_CSAPot(name=name, file=file, oTensor=csa_tensor['amide_N'])
         CS.setScale(scale)
         CS.setTensorClass("bond")
@@ -277,6 +322,31 @@ if CSA_all:
         t.setFreedom( "fixDa, fixRh, fixAxis" )
         pass
 
+    
+if CSA_all_free:
+    csa = PotList('CS')
+    from csaPotTools import create_CSAPot
+    for (name, file, atom_sigma, ang_b, scale) in CSA_all_free:
+        CS=create_CSAPot(name=name, file=file, oTensor=csa_tensor['amide_N'])
+        CS.setScale(scale)
+        CS.setTensorClass("bond")
+        CS.setThreshold(0.01)
+        CS.setPotType('square')
+        CS.setSigma(atom_sigma)
+        CS.setBeta(ang_b)
+        CS.setAtomOrder("123")
+        CS.setShowAllRestraints(True)
+        CS.setVerbose(True)
+        CS.setDaScale(DC_NH_max*-1)
+        csa.append(CS)
+    pots.append(csa)
+    #highTempParams.append(StaticRamp("csa.setScale(ini_cs)"))
+    rampedParams.append(MultRamp(0, 0, "csa.setScale(VALUE)"))
+    lowTempParams.append(StaticRamp("csa.setScale(0)"))
+
+    for t in csa_tensor.values():
+        t.setFreedom( "fixDa, fixRh, fixAxis" )
+        pass
 
 ### DIHEDRAL RESTRAINTS ###
     
