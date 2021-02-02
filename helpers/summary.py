@@ -1,7 +1,8 @@
 import glob
 import re
 import argparse
-
+import shutil
+import numpy as np
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Summary statistics for OS-ssNMR structures.',
@@ -37,6 +38,10 @@ def parse_args():
     parser.add_argument(
         '--R_csa_err', type=float, default=5.0,
         help='Errors used to compute CSA R factors. Default: None'
+    )
+    parser.add_argument(
+        '--top', type=int, default=10,
+        help='Extract this number of top structures and summarize stats. Default: 10'
     )
     args = parser.parse_args()
     return args
@@ -103,6 +108,27 @@ def r_value(viols_file, search_terms, err, rtype):
     return result
 
 
+def r_output(indata):
+    c = 0
+    data = dict()
+    mods = []
+    rids = []
+    for l in indata:
+        for resid,resname,obs,calc in l:
+            try:
+                data[resid].append(str(calc).ljust(10))
+            except:
+                data[resid] = [resname.ljust(10), str(obs).ljust(10), str(calc).ljust(10)]
+                rids.append(resid)
+        mods.append(str(c).ljust(10))
+        c += 1
+
+    rids = sorted(rids)
+    print('RESID'.ljust(10)+' '+'RESNAME'.ljust(10)+' '+'OBS'.ljust(10)+' '+' '.join(mods))
+    for i in rids:
+        print(str(i).ljust(10)+' '+' '.join(data[i]))
+
+
 
 def main():
 
@@ -116,11 +142,12 @@ def main():
     r_csa_work = args.R_csa_work
     r_csa_free = args.R_csa_free
     r_csa_err = args.R_csa_err
+    top = args.top
 
     # Accumulate list of files from folder list
     files = []
     for folder in folders:
-        for f in glob.glob('{}/*70.sa'.format(folder)):
+        for f in glob.glob('{}/*.sa'.format(folder)):
             files.append(f)
 
     # Collect summary data for selected energy terms
@@ -141,12 +168,6 @@ def main():
                 if line[2] in energy_terms:
                     summary[f][line[2]] = line[3]
                     tot_energy += float(line[3])
-
-        # Read R-value
-        #r_value(f+'.viols', r_csa_work, 5.0, 'CSA')
-        #r_value(f+'.viols', r_csa_free, 5.0, 'CSA')
-        #r_value(f+'.viols', r_dc_work, 0.5, 'DC')
-        #r_value(f+'.viols', r_dc_free, 0.5, 'DC')
         
         # Record file and total energy for sorting
         results.append((f, tot_energy))
@@ -154,8 +175,11 @@ def main():
 
             
     # Sort files by energy
+    print('Detected {} files'.format(len(results)))
+    print('Ranking structures according to sum of terms: {}\n'.format(' '.join(energy_terms)))
     sorted_results = sorted(results, key = lambda x: x[1])
 
+    
     # Output sorted results
     # Add fields for R_values
     if r_csa_work:
@@ -166,15 +190,77 @@ def main():
         energy_terms.append('R_DC_w')
     if r_dc_free:
         energy_terms.append('R_DC_f')
-        
+
+
     energy_terms_ljust = [ t.ljust(10) for t in energy_terms ]
-    print('#Filename'.ljust(38)+' '+'TOTAL'.ljust(10)+' '+' '.join(energy_terms_ljust))
+    print('Filename'.ljust(38)+' '+'TOTAL'.ljust(10)+' '+' '.join(energy_terms_ljust))
     for f,e in sorted_results:
         file_results = []
         ef = '{0:.2f}'.format(e)
+
+        # Calculate R-values for file
+        if r_csa_work:
+            summary[f]['R_CSA_w'] = '{0:.4f}'.format(r_value(f+'.viols', r_csa_work, r_csa_err, 'CSA')[0])
+        if r_csa_free:
+            summary[f]['R_CSA_f'] = '{0:.4f}'.format(r_value(f+'.viols', r_csa_free, r_csa_err, 'CSA')[0])
+        if r_dc_work:
+            summary[f]['R_DC_w'] = '{0:.4f}'.format(r_value(f+'.viols', r_dc_work, r_dc_err, 'DC')[0])
+        if r_dc_free:
+            summary[f]['R_DC_f'] = '{0:.4f}'.format(r_value(f+'.viols', r_dc_free, r_dc_err, 'DC')[0])
+        
         for term in energy_terms:
             file_results.append(str(summary[f][term]).ljust(10))
         print(f.ljust(38)+' '+str(ef).ljust(10)+' '+' '.join(file_results))
 
+    # Print summary statistics
+    print()
+    c = 0
+    r_csa_w_lists = []
+    r_csa_f_lists = []
+    r_dc_w_lists = []
+    r_dc_f_lists = []
+    for f,e in sorted_results[:top]:
+        print('Copying {} to top.{}.sa'.format(f, c))
+        shutil.copyfile(f, 'top.{}.sa'.format(c))
+        if r_csa_work:
+            r_csa_w_lists.append(r_value(f+'.viols', r_csa_work, r_csa_err, 'CSA')[1])
+        if r_csa_free:
+            r_csa_f_lists.append(r_value(f+'.viols', r_csa_free, r_csa_err, 'CSA')[1])
+        if r_dc_work:
+            r_dc_w_lists.append(r_value(f+'.viols', r_dc_work, r_dc_err, 'DC')[1])
+        if r_dc_free:
+            r_dc_f_lists.append(r_value(f+'.viols', r_dc_free, r_dc_err, 'DC')[1])
+        c += 1
+    print()
+
+    # Mean and standard deviations
+    print('Term\t\tMean\t\tStdev')
+    for term in energy_terms:
+        vals = []
+        tots = []
+        for f,e in sorted_results[:top]:
+            vals.append(float(summary[f][term]))
+            tots.append(e)
+        print('{0}\t\t{1:.3f}\t\t{2:.3f}'.format(term, np.mean(vals), np.std(vals)))
+    print('TOT\t\t{0:.3f}\t\t{1:.3f}'.format(np.mean(tots), np.std(tots)))
+    print()
+
+    # Output OBS vs CALC summary
+    print('CSA Working Restraints:')
+    if r_csa_work:
+        r_output(r_csa_w_lists)
+
+    print('\nCSA Free Restraints:')
+    if r_csa_free:
+        r_output(r_csa_f_lists)
+
+    print('\nDC Working Restraints:')
+    if r_dc_work:
+        r_output(r_dc_w_lists)
+
+    print('\nDC Free Restraints:')
+    if r_dc_free:
+        r_output(r_dc_f_lists)
+    
 if __name__ == '__main__':
     main()
