@@ -220,8 +220,10 @@ def main():
     r_dc_w_lists = []
     r_dc_f_lists = []
     for f,e in sorted_results[:top]:
-        print('Copying {} to top.{}.sa'.format(f, c))
+        print('Copying {} to top.{}.sa and {}.sa.viols'.format(f, c, f))
         shutil.copyfile(f, 'top.{}.sa'.format(c))
+        shutil.copyfile(f+'.viols', 'top.{}.sa.viols'.format(c))
+        
         if r_csa_work:
             r_csa_w_lists.append(r_value(f+'.viols', r_csa_work, r_csa_err, 'CSA')[1])
         if r_csa_free:
@@ -246,20 +248,20 @@ def main():
     print()
 
     # Output OBS vs CALC summary
-    print('CSA Working Restraints:')
     if r_csa_work:
+        print('CSA Working Restraints:')
         r_output(r_csa_w_lists)
 
-    print('\nCSA Free Restraints:')
     if r_csa_free:
+        print('\nCSA Free Restraints:')
         r_output(r_csa_f_lists)
 
-    print('\nDC Working Restraints:')
     if r_dc_work:
+        print('\nDC Working Restraints:')
         r_output(r_dc_w_lists)
 
-    print('\nDC Free Restraints:')
     if r_dc_free:
+        print('\nDC Free Restraints:')
         r_output(r_dc_f_lists)
     
 if __name__ == '__main__':
