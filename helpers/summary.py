@@ -108,7 +108,7 @@ def r_value(viols_file, search_terms, err, rtype):
     return result
 
 
-def r_output(indata):
+def r_output(indata, err):
     c = 0
     data = dict()
     mods = []
@@ -116,9 +116,19 @@ def r_output(indata):
     for l in indata:
         for resid,resname,obs,calc in l:
             try:
-                data[resid].append(str(calc).ljust(10))
+                if abs(abs(obs)-abs(calc)) <= err:
+                    calc_s = str(calc)
+                    data[resid].append(calc_s.ljust(10))
+                else:
+                    calc_s = str(calc)+'*'
+                    data[resid].append(calc_s.ljust(10))
             except:
-                data[resid] = [resname.ljust(10), str(obs).ljust(10), str(calc).ljust(10)]
+                if abs(abs(obs)-abs(calc)) <= err:
+                    calc_s = str(calc)
+                    data[resid] = [resname.ljust(10), str(obs).ljust(10), calc_s.ljust(10)]
+                else:
+                    calc_s = str(calc)+'*'
+                    data[resid] = [resname.ljust(10), str(obs).ljust(10), calc_s.ljust(10)]
                 rids.append(resid)
         mods.append(str(c).ljust(10))
         c += 1
@@ -127,7 +137,6 @@ def r_output(indata):
     print('RESID'.ljust(10)+' '+'RESNAME'.ljust(10)+' '+'OBS'.ljust(10)+' '+' '.join(mods))
     for i in rids:
         print(str(i).ljust(10)+' '+' '.join(data[i]))
-
 
 
 def main():
@@ -250,19 +259,19 @@ def main():
     # Output OBS vs CALC summary
     if r_csa_work:
         print('CSA Working Restraints:')
-        r_output(r_csa_w_lists)
+        r_output(r_csa_w_lists, r_csa_err)
 
     if r_csa_free:
         print('\nCSA Free Restraints:')
-        r_output(r_csa_f_lists)
-
+        r_output(r_csa_f_lists, r_csa_err)
+        
     if r_dc_work:
         print('\nDC Working Restraints:')
-        r_output(r_dc_w_lists)
+        r_output(r_dc_w_lists, r_dc_err)
 
     if r_dc_free:
         print('\nDC Free Restraints:')
-        r_output(r_dc_f_lists)
-    
+        r_output(r_dc_f_lists, r_dc_err)
+        
 if __name__ == '__main__':
     main()
