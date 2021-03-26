@@ -1,0 +1,9 @@
+assign
+ ( resid 9999 and name OO )
+ ( resid 9999 and name Z )
+ ( resid 9999 and name X )
+ ( resid 9999 and name Y )
+ ( resid 2 and name N )
+ ( resid 2 and name HN )
+ ( resid 1 and name C )
+ -7.408 5.000 5.000
