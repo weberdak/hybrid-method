@@ -19,6 +19,7 @@ This repository details a protocol for determining the structure and topology of
 	* Alignment of helical segments so topology is unaffected (i.e., not applying rotations).
 	* Helix tilt and azimuthal angle measurements from atomic coordinates.
 * [synthHelix.py](helpers/synthHelix.py) helper tool to generate artificial dihedral and hydrogen bonding restraints for transmembrane segments assumed to be alpha-helical.
+* [rfree.py](helpers/rfree.py) script to split CSAs and DCs into free and working restraints.
 * All restraining potentials are optional. Just leave options blank in the configuration script if data is unavailable.
 
 List of XPLOR-NIH potentials/classes currently applied in the [hybrid-method.py](hybrid-method.py) script:
@@ -89,11 +90,11 @@ This will output three XPLOR-NIH restraint tables: [sln_cs.tbl](examples/sln/inp
 
 The [sln_cs.tbl](examples/sln/input/sln_cs.tbl), [sln_dc.tbl](examples/sln/input/sln_dc.tbl) and [sln_cs_gly.tbl](examples/sln/input/sln_cs_gly.tbl) restraint files are now ready to be used as inputs for XPLOR-NIH.
 
-Sometimes it may be desirable to reserve a portion of the oriented restraints to be back-calcuated from the structures without applied forces. This can help identify issues with over fitting. If this is desired, the restraint files output from above can be processed further by the [rfree.py](helpers/rfree.py) helper script:
+Sometimes it may be desirable to reserve a portion of the oriented restraints to be back-calculated from the structures without applied forces. This can help identify issues with over fitting. If this is desired, the restraint files output from above can be processed further by the [rfree.py](helpers/rfree.py) helper script:
 
 	python3 rfree.py -i ossnmr_cs.tbl ossnmr_dc.tbl ossnmr_cs_gly.tbl -r 20
 
-This will randomly reserve (-r) 20% of the CSA and DC restraints for cross-validation and produce 5 output files: [sln_cs.free.tbl](examples/sln/input/sln_cs.free.tbl), [sln_cs.work.tbl](examples/sln/input/sln_cs.work.tbl), [sln_dc.free.tbl](examples/sln/input/sln_dc.free.tbl), [sln_dc.work.tbl](examples/sln/input/sln_dc.work.tbl), and [sln_cs_gly.work.tbl](examples/sln/input/sln_cs_gly.work.tbl).
+This will randomly reserve (-r) 20% of the CSA and DC restraints for cross-validation and produce 5 additional files: [sln_cs.free.tbl](examples/sln/input/sln_cs.free.tbl), [sln_cs.work.tbl](examples/sln/input/sln_cs.work.tbl), [sln_dc.free.tbl](examples/sln/input/sln_dc.free.tbl), [sln_dc.work.tbl](examples/sln/input/sln_dc.work.tbl), and [sln_cs_gly.work.tbl](examples/sln/input/sln_cs_gly.work.tbl).
 
 
 #### Step 3: Prepare additional restraints for helical segments
@@ -123,7 +124,7 @@ The [pdbutil webserver](https://spin.niddk.nih.gov/bax/nmrserver/pdbutil/ext.htm
 
 #### Step 5: Running the simulated annealing calculation
 
-Now that all of the restraint tables and input files have been prepared, we are ready to run the first simulated annealing stage. The [hybrid.py](hybrid.py) is used and is run by from customizable BASH script ([hybrid-method_local.sh](examples/hybrid-method_local.sh)) as follows:
+Now that all of the restraint tables and input files have been prepared, we are ready to run the first simulated annealing stage. The [hybrid.py](hybrid.py) protocol is run customizable BASH script ([hybrid_fold.sh](examples/hybrid_fold.sh)):
 
 	#!/bin/bash -l
 	#SBATCH --time=24:00:00
@@ -169,7 +170,6 @@ Now that all of the restraint tables and input files have been prepared, we are 
 	      --resetCenter       yes \
 	      --ezPot             "resid 0:31"
 	
-	
 	# Mark best structures and move to folder
 	echo "Getting best folded structures according to XPLOR."
 	getBest -num 10 -symlinks
@@ -177,7 +177,6 @@ Now that all of the restraint tables and input files have been prepared, we are 
 	mkdir out.fold
 	mv *.sa* out.fold/
 	mv logfile* out.fold/
-	
 	
 	# Run summary statistics
 	echo "Getting best folded structures using summary.py"
@@ -193,49 +192,61 @@ Now that all of the restraint tables and input files have been prepared, we are 
 		--R_csa_err 5.0 > summary.out
 	cd ../
 
-which is run from a Bash terminal by:
+which is run on the Minnesota Supercomputing Institute (MSI) cluster by:
 
-	bash hybrid-method_local.sh
+	sbatch -p small hybrid_fold.sh
 
-The progress of the calculation can be followed using the tail command:
+Alternatively, the script can be slightly modified and run locally by:
 
-	tail -f logfile.out
+	bash hybrid_fold.sh
 
-Running this shell script allows us to avoid the having to edit the hybrid-method.py program, which requires a good understanding of both XPLOR-NIH and Python scripting. Although, the line "xplor.requireVersion('3.0')" will have to be modified if a different version of XPLOR-NIH is installed. This generic method is very well suited as quick-start/introductory approach to solving structure/topology of simple single-pass helical membrane proteins. However, if more complicated systems are to be solved, such as multi-pass proteins, beta-barrels and oligomers, the hybrid-method.py and Bash scripts will have to be edited/developed further.
-
-It should also be emphasized that all restraints (DC_NH, CSA_N1, CSA_N1_gly, HBDA, NOE and DIHE) are completely optional. If these restraints are not available, then simply put "" in place of the file paths. For example, the following will not apply NOE or hydrogen bonding restraints:
+Running this shell script avoids having to edit the hybrid.py program, which requires a good understanding of both XPLOR-NIH and Python scripting. This generic method is a good starting point to solving the structure and topology of simple single-pass helical membrane proteins. However, if more complicated systems are to be solved, such as multi-pass proteins, beta-barrels and oligomers, the hybrid.py and BASH scripts will have to be developed further to handle additional restraint types.
 
 
 
-The basic XPLOR-NIH protocol is taken from ([Tian et al., J. Biol. NMR, 2017](https://doi.org/10.1007/s10858-016-0082-5)) and applies EEFx force field and IMMx implicit membrane model ([Tian et al., Biophys. J., 2015](https://doi.org/10.1016/j.bpj.2015.06.047) ) developed by the Marassi Lab.
+##### Notes about specifying restraints
 
-The IMMx membrane hydrophobic thickness is specified by "--immx_thickness", which for this example was set to the thickness of a DMPC/POPC (3:1 molar ratio) bicelle (25.8 angstroms) as taken from the weighted averages of DMPC and POPC (= 25.4 x 0.75 + 27.0 x 0.25). See p. 379 of the [Handbook of Lipid Bilayers - 2nd Edition](https://books.google.com/books?hl=en&lr=&id=JgnLBQAAQBAJ&oi=fnd&pg=PP1&dq=Marsh,+Handbook+of+lipid+bilayers&ots=t_vN1All4R&sig=yQdbT7LruGwNszFa586dCV1WPX4#v=onepage&q=Marsh%2C%20Handbook%20of%20lipid%20bilayers&f=false) (Marsh, 2013). The IMMx nparameter (--immx_nparameter),  which defines transition at the hydrophobic/hydrophilic interface, was also set to it default value of 10.
+All restraints (DC_NH_X, CSA_N1_X, CSA_N1_gly_X, HBDA, NOE and DIHE) are completely optional and can be excluded from the calculation by simply putting "" in place of the file paths. This is done for the DC_NH_free, CSA_N1_free, and CSA_N1_gly_free restraints in the above example and all CSAs and DCs are set as working restraints.
 
-The maximum <sup>15</sup>N-<sup>1</sup>H dipolar coupling (--DC_NH) was set to the default 10.735 kHz ([Denny et al., J. Mag. Res, 2001](https://doi.org/10.1006/jmre.2001.2405)).
+The basic XPLOR-NIH protocol is taken from ([Tian et al., J. Biol. NMR, 2017](https://doi.org/10.1007/s10858-016-0082-5)) and applies EEFx force field and IMMx implicit membrane model ([Tian et al., Biophys. J., 2015](https://doi.org/10.1016/j.bpj.2015.06.047) ) developed by the Marassi Lab. The IMMx membrane hydrophobic thickness is specified by "--immx_thickness", which for this example is set to the thickness of a DMPC/POPC (4:1 molar ratio) bicelle (25.72 angstroms) as taken from the weighted averages of DMPC and POPC (= 25.4 x 0.8 + 27.0 x 0.2). See p. 379 of the [Handbook of Lipid Bilayers - 2nd Edition](https://books.google.com/books?hl=en&lr=&id=JgnLBQAAQBAJ&oi=fnd&pg=PP1&dq=Marsh,+Handbook+of+lipid+bilayers&ots=t_vN1All4R&sig=yQdbT7LruGwNszFa586dCV1WPX4#v=onepage&q=Marsh%2C%20Handbook%20of%20lipid%20bilayers&f=false) (Marsh, 2013). The IMMx nparameter (--immx_nparameter) defines the transition at the hydrophobic/hydrophilic interface and is set to its default value of 10.
 
-The principal axis system (PAS) of the non-glycine chemical shift tensor (--CSA_N1_tensor) was set the default  delta11 = 57.3 ppm, delta22 = 81.2 ppm, delta33 = 228.1 ppm ([Murray et al., J. Mag. Res., 2014](http://dx.doi.org/10.1016/j.jmr.2013.12.014)), and the glycine PAS (--CSA_N1_tensor_gly) to delta11 = 45.6 ppm, delta22 = 66.3 ppm, delta33 = 211.6 ppm ([Straus et al., J. Biol. NMR, 2003](https://doi.org/10.1023/A:1024098123386)). Note that the <sup>15</sup>N PAS components will be automatically converted to the XPLOR-NIH input format. The beta values were set to default values of -17.0 and -21.6 degrees as per the above references. Beta values for the <sup>15</sup>N PAS are negative due to the right-hand rule. 
+The maximum <sup>15</sup>N-<sup>1</sup>H dipolar coupling (--DC_NH) is set to the default 10.735 kHz ([Denny et al., J. Mag. Res, 2001](https://doi.org/10.1006/jmre.2001.2405)). The principal axis system (PAS) of the non-glycine chemical shift tensor (--CSA_N1_tensor) is set to the default values of delta11 = 57.3 ppm, delta22 = 81.2 ppm, delta33 = 228.1 ppm ([Murray et al., J. Mag. Res., 2014](http://dx.doi.org/10.1016/j.jmr.2013.12.014)), and the glycine PAS (--CSA_N1_tensor_gly) to the default delta11 = 45.6 ppm, delta22 = 66.3 ppm, delta33 = 211.6 ppm ([Straus et al., J. Biol. NMR, 2003](https://doi.org/10.1023/A:1024098123386)). Note that the <sup>15</sup>N PAS components will be automatically converted to XPLOR-NIH input format. The format specified in the BASH configuration script was chosen as it is more familiar and used throughout the literature. The beta values are set to the defaults of -17.0 and -21.6 degrees as per the above references. Beta values for the <sup>15</sup>N PAS are negative due to the right-hand rule.
 
-The --w_slf and --w_r are the weighting terms for the DC and CSA restraints in the form typically used the Cross ([Kim et al., J. Am. Chem. Soc., 2001](https://doi.org/10.1021/ja003380x)) and Veglia ([Shi et. al., J. Biol. NMR, 2009](https://doi.org/10.1007/s10858-009-9328-9)) groups. The --w_slf of 5 specifies that the sum of the CSA and DC restraints in 5x the torsion angle (DIHE) term (i.e., 5 x 200 kcal/mol = 1000 kcal/mol) and --w_r of 3 specifies that the DC term (i.e., 750 kcal/mol/kHz) is weighted 3x more heavily than the CSA term (i.e., 250 kcal/mol/ppm). These restraints are applied as flat-well potentials in our protocols.
+The --w_slf and --w_r are the weighting terms for the DC and CSA restraints in the form typically used by the Cross ([Kim et al., J. Am. Chem. Soc., 2001](https://doi.org/10.1021/ja003380x)) and Veglia ([Shi et. al., J. Biol. NMR, 2009](https://doi.org/10.1007/s10858-009-9328-9)) groups. The --w_slf of 5 specifies that the sum of the CSA and DC force constants is 5x that of the torsion angle (DIHE) term (i.e., 5 x 200 kcal/mol = 1000 kcal/mol) and --w_r of 3 specifies that the DC term (i.e., 750 kcal/mol/kHz) is weighted 3x more heavily than the CSA term (i.e., 250 kcal/mol/ppm). These restraints are applied as flat-well potentials in our protocols.
 
 
 
-A basic overview of this simulated annealing protocol follows:
+##### The overall protocol
 
-0. Read input PDB structure
+A basic overview:
+
+0. Input PDB structure. Optionally unfold at loading and prior to dynamics (--unfold)*.
 1. Initial torsion angle minimization (100 steps)
-2. Center protein to membrane (--tm_domain) then high temperature torsion dynamics with REPEL force field (3500 K for 3 ps, 3000 steps)
-3. Center protein then high temperature torsions dynamics phasing in EEFx parameters (3500 K for 3 ps, 3000 steps)
-4. Center protein then high temperature torsion dynamics with only EEFx parameters (3500 K for 26 ps, 26000 steps)
-5. Center protein again then simulated annealing (3500 K to 25 K in 12.5 K steps, 0.2 ps/200 steps per increment).
-6. Low temperature torsion dynamics (25 K for 15 ps, 15000 steps)
+2. Center protein (--resetCenter)* to membrane then high temperature torsion dynamics with REPEL (A K for 3000 steps) (--repelStart)*
+3. Center protein (--resetCenter)* then high temperature torsions dynamics phasing in EEFx parameters (A K for 3000 steps) (--repelStart)*
+4. Center protein (--resetCenter)* then high temperature torsion dynamics with only EEFx paramters (A K for B steps)
+5. Center protein (--resetCenter)* again then simulated annealing (A K to C K in D K steps, E steps per increment)
+6. Minimize insertion depth (Z-position) using knowledge-based Ez-Potential (ezPot)*
 7. Powell torsion angle minimization (500 steps)
 8. Powell Cartesian minimization (500 steps)
+
+*Optional steps
+
+Settings: 
+
+unfold = 'yes', A(--initialTemp)=3500, B(--highTempSteps)=25000, 
+C(--finalTemp)=25, D(--stepTemp)=12.5, E(--annealSteps)=201, 
+--nstructures=1000, resetCenter = 'yes', ezPot = 'resid i:j' (i = first resid, j = last resid)
+
+
+
+The above example will calculate 1000 structures...Talk about summary.
 
 
 
 #### Step 6: Refinement
 
-For the next stage, 
+The refinement
 
 	#!/bin/bash -l
 	#SBATCH --time=24:00:00
@@ -281,28 +292,30 @@ For the next stage,
 	      --resetCenter       yes \
 	      --repelStart        no \
 	      --ezPot             "resid 0:31"
-	
-	
-	# Mark best structures and move to folder
-	echo "Getting best refined structures according to XPLOR."
-	getBest -num 10 -symlinks
-	rm -rf out.refine
-	mkdir out.refine
-	mv *.sa* out.refine/
-	mv logfile* out.refine/
-	
-	
-	# Run summary statistics
-	echo "Getting best refined structures using summary.py"
-	rm -rf summary.refine
-	mkdir summary.refine
-	cd summary.refine/
-	python3 ../summary.py \
-		--folders ../out.refine* \
-		--terms DIPL_w CS_w CDIH BOND ANGL IMPR EEFX \
-		--R_dc_work amide_NH_work \
-		--R_dc_err 0.5 \
-		--R_csa_work amide_N1_work amide_N1_gly_work \
-		--R_csa_err 5.0 > summary.out
-	cd ../
+
+
+​	
+​	# Mark best structures and move to folder
+​	echo "Getting best refined structures according to XPLOR."
+​	getBest -num 10 -symlinks
+​	rm -rf out.refine
+​	mkdir out.refine
+​	mv *.sa* out.refine/
+​	mv logfile* out.refine/
+
+
+​	
+​	# Run summary statistics
+​	echo "Getting best refined structures using summary.py"
+​	rm -rf summary.refine
+​	mkdir summary.refine
+​	cd summary.refine/
+​	python3 ../summary.py \
+​		--folders ../out.refine* \
+​		--terms DIPL_w CS_w CDIH BOND ANGL IMPR EEFX \
+​		--R_dc_work amide_NH_work \
+​		--R_dc_err 0.5 \
+​		--R_csa_work amide_N1_work amide_N1_gly_work \
+​		--R_csa_err 5.0 > summary.out
+​	cd ../
 

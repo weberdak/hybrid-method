@@ -1,7 +1,7 @@
 # SIMPLE PROTOCOL TO FOLD OR REFINE MEMBRANE PROTEIN STRUCTURES
 # WITH OS-ssNMR CSA AND DC RESTRAINTS
 #
-# Written by D. K. Weber, Veglia Lab (last revised Mar 3 2021)
+# Written by D. K. Weber, Veglia Lab (last revised Mar 26 2021)
 #
 # DESCRIPTION
 # -----------
@@ -13,14 +13,14 @@
 # --------
 # This follows the refinement protocol from Tian...Marassi, 2015, DOI: 10.1016/j.bpj.2015.06.047
 # The template in the XPLOR-NIH tutorials (eefx-membrane) was used predominantly, but modified
-# to used DC/CSA restraints according to Veglia lab preferences. Also updated to use RepelPot.
+# to used DC/CSA restraints according to Veglia lab preferences.
 #
-# 0. Input PDB structure. Optionally unfold at loading and prior to dynamics 
+# 0. Input PDB structure. Optionally unfold at loading and prior to dynamics (--unfold)*.
 # 1. Initial torsion angle minimization (100 steps)
-# 2. Center protein* to membrane then high temperature torsion dynamics with RepelPot (A K for 3000 steps)
-# 3. Center protein* then high temperature torsions dynamics phasing in EEFx parameters (A K for 3000 steps)
-# 4. Center protein* then high temperature torsion dynamics with only EEFx paramters (A K for B steps)
-# 5. Center protein* again then simulated annealing (A K to C K in D K steps, E steps per increment)
+# 2. Center protein (--resetCenter)* to membrane then high temperature torsion dynamics with RepelPot (A K for 3000 steps) (--repelStart)*
+# 3. Center protein (--resetCenter)* then high temperature torsions dynamics phasing in EEFx parameters (A K for 3000 steps) (--repelStart)*
+# 4. Center protein (--resetCenter)* then high temperature torsion dynamics with only EEFx paramters (A K for B steps)
+# 5. Center protein (--resetCenter)* again then simulated annealing (A K to C K in D K steps, E steps per increment)
 # 6. Minimize insertion depth (Z-position) using knowledge-based Ez-Potential*
 # 7. Powell torsion angle minimization (500 steps)
 # 8. Powell Cartesian minimization (500 steps)
@@ -28,12 +28,13 @@
 
 # RECOMMENDED SETTINGS
 # --------------------
-# Fold: Unfold = 'yes', A=3500, B=25000, C=25, D=12.5, E=201, nstructures = 512 (take top 5), 
-#       setCenter = 'yes', ezPot = 'resid 0:n' (n = last resid)
+# Fold: unfold = 'yes', A(--initialTemp)=3500, B(--highTempSteps)=25000, 
+#       C(--finalTemp)=25, D(--stepTemp)=12.5, E(--annealSteps)=201, 
+#       --nstructures=1000, resetCenter = 'yes', ezPot = 'resid i:j' (i = first resid, j = last resid)
 # 
-# Refine: Unfold = 'no', A=350, B=25000, C=2.5, D=1.25, E=201, nstructures = 128 for each of top 5 structures from folding, 
-#         setCenter = 'no', ezPot = '' (don't apply)
-
+# Refine: unfold = 'no', A(--initialTemp)=350, B(--highTempSteps)=1000, 
+#       C(--finalTemp)=2.5, D(--stepTemp)=1.25, E(--annealSteps)=201, 
+#       --nstructures=1000, resetCenter = 'yes', ezPot = 'resid i:j' (i = first resid, j = last resid)
 
 # ARGUMENT PARSER
 # ===============================================================================
