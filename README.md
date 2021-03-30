@@ -221,7 +221,7 @@ Alternatively, the script can be slightly modified and run locally by:
 bash hybrid_fold.sh
 ```
 
-Running this shell script avoids having to edit the hybrid.py program, which requires a good understanding of both XPLOR-NIH and Python scripting. This generic method is a good starting point to solving the structure and topology of simple single-pass helical membrane proteins. However, if more complicated systems are to be solved, such as multi-pass proteins, beta-barrels and oligomers, the hybrid.py and BASH scripts will have to be developed further to handle additional restraint types.
+Ready-to-run examples are included in this repository: [sln_local.tar.xz](examples/sln/sln_local.tar.xz) (local PC) and [sln_slurm.tar.xz](examples/sln/sln_slurm.tar.xz) (remote CPU cluster using the SLURM scheduler). Running calculations through shell script avoids having to edit the hybrid.py program each time, which requires a good understanding of both XPLOR-NIH and Python scripting. This generic method is a good starting point to solving the structure and topology of simple single-pass helical membrane proteins. However, if more complicated systems are to be solved, such as multi-pass proteins, beta-barrels and oligomers, the hybrid.py and BASH scripts will have to be developed further to handle additional restraint types.
 
 
 
@@ -286,13 +286,15 @@ note that if there are more than 10 files, the structures wont be loaded in the 
 vmd top.0.sa top.1.sa top.2.sa top.3.sa top.4.sa top.5.sa top.6.sa top.7.sa top.8.sa top.9.sa
 ```
 
-After loading the structures (visualize all at once using )
+After loading the structures (visualize all at once using Graphics -> Representations -> Trajectory -> enter "0:1:9" in "Draw Multiple Frames" box) you will notice that the structures are scattered around and hard to compare. However, while these structures look different, they are essentially identical according to OS-ssNMR observables since they are degenerate with respect to Z-axis rotations and 180 degrees rotations about the X- or Y-axis. Typically one would do an RMSD fit to align structures, however, this will introduce unwanted rotations and translation that will prevent us from assessing the precision of the tilt/azimuthal angles and depth-of-insertions determined by the XPLOR calculation. While computing the tilt/azimuthal angles, the [hybridTools.tcl](helpers/hybridTools.tcl) functions will also do an alignment that will not affect this information. The complete analysis of the structural bundle can be done by the [analyze.tcl](examples/sln/output/analyze.tcl) script, run using the VMD Tk Console (Extensions -> Tk Console) by: 
 
-The  [analyze.tcl](examples/sln/output/analyze.tcl) 
-
-
+```tcl
+source analyze.tcl
+```
 
 <img src="examples/sln/output/fold/hybridTools_fold.jpg" width="800">
+
+The outline of the script is:
 
 ```tcl
 source hybridTools.tcl
@@ -325,108 +327,129 @@ draw cylinder [list 0 0 [expr (-$thickness/2)+0.1]] [list 0 0 [expr (-$thickness
 
 
 
-In this example, the helix_topology function does the following to each model:
+And will do the following for each model:
 
 1. Flips them so the the C-terminus is below the bottom leaflet (-inside C; i.e., it is an ER membrane protein).
 2. Measures the tilt angle using the vector between two center of masses (using only N, C, and CA atoms) assigned to the upper and lower halves of the helical segment. The angle is determined in the C -> N direction (-invert).
 3. Does a Z-rotation so that the helical segment is aligned perfectly along the X-axis and the X-component of the helix vector is positive.
 4. At this point, there is an option (-fix_tilt <angle>) to perform a Y-rotation to fix the tilt to a desire angle. This is not done here, but can be useful for aligning MD trajectories prior to back-calculating SLF spectra using [MD2SLF](https://github.com/weberdak/md2slf). Aligning trajectories like this, especially for single-pass helical proteins, will greatly reduce the convergence time of these calculations.
-5. Translates the protein so that the center of mass of the TM segment is at the origin (X = 0, Y = 0). Specifying "-no_z" ensures that the no Z-translations. This is important since the depth of insertion is a feature optimized by XPLOR-NIH and should not in anyway be manipulated.
+5. Translates the protein so that the center of mass of the TM segment is at the origin (X = 0, Y = 0). Specifying "-no_z" ensures that there are no Z-translations. This is important since the depth of insertion is a feature optimized by XPLOR-NIH and should not in anyway be manipulated.
 6. Calculates the azimuthal angle based on the center of mass of the $azi selection, which in this case it is the CA of V15 to provide the azimuthal angle of L16 as per the convention used by [Denny et al. 2001](https://www.sciencedirect.com/science/article/abs/pii/S109078070192405X?via%3Dihub) and the [PISA-SPARKY and pisa.py](https://github.com/weberdak/pisa.py) tools used to fit experimental data. To calculate this:
    1.  The helix is temporarily rotated to zero degrees.
-   2. A center of mass is determined using the N, C, and CA backbone atoms of residues i-2 to i+2.
+   2. A center of mass is determined using the N, C, and CA backbone atoms of surrounding i-2 to i+2 residues.
    3. The vector from $azi to the local helical center of mass is determined.
    4. The azimuthal angle is then determined the to magnitudes of the X and Y components of this vector.
    5. The helix tilt readjustment done at step 6.1 is reversed.
 
 
 
-The tilt and azimuthal angles for each model are recorded in the results_tilt6-28_azi16.dat file. All models (now aligned) are then written to separate PDBs for publication, deposition, analysis using other visualization package, etc, and the membrane leaflets are drawn. In general, a good calculation will typically show:
+The tilt and azimuthal angles for each model are recorded in the [results_tilt6-28_azi16.dat](examples/sln/output/fold/results_tilt6-28_azi16.dat) file. The average tilt and azimuthal angles of the bundle is 25.6 +/- 1.3 degrees and 123.7 +/- 4.4 degrees, respectively, which is well within the error determined by [PISA-wheel fitting of experimental data](https://github.com/weberdak/pisa.py/blob/master/examples/sarcolipin/sln_explore_errs_log.dat) of 24.7 +/- 1.0 degrees and 125.4 +/- 3.8 degrees. All models (now aligned) are then written to separate PDBs for publication, deposition, analysis using other visualization package, etc, and the membrane leaflets are drawn. In general, a good calculation will typically show:
 
-1. Polar sidechains should be directed towards the upper (azimuthal angle = 0 degrees) and lower (180 degrees) leaflets.
-2. Amphipathic helix at the inter-facial regions
+1. Polar side chains should be directed towards the upper (azimuthal angle = 0 degrees) and lower (180 degrees) leaflets.
+2. Amphipathic helix at the interfacial regions.
 3. Helical length and tilt angle matched to the bilayer thickness.
-
-
 
 
 
 #### Step 6: Refinement
 
-The refinement
+While the structures determined during the folding stage are pretty good, an additional refinement stage can provide additional improvements. To do this, a second calculation is done using settings defined in the [hybrid_refine.sh](examples/hybrid_refine.sh) shell script using the lowest energy structure from the Step 5 as the input structure:
 
-	#!/bin/bash -l
-	#SBATCH --time=24:00:00
-	#SBATCH --ntasks=24
-	#SBATCH --mem=16g
-	#SBATCH --tmp=16g
-	#SBATCH --mail-type=ALL  
-	#SBATCH --mail-user=dweber@umn.edu
-	
-	cd /home/vegliag/dweber/xplor_data/20210325_SLN
-	
-	# Folding
-	echo "Folding protein."
-	xplor -py -smp 24 -o logfile.out hybrid.py \
-	      --structure_in      summary.fold/top.0.sa \
-	      --DC_NH_work        input/sln_dc.tbl \
-	      --CSA_N1_work       input/sln_cs.tbl \
-	      --CSA_N1_gly_work   input/sln_cs_gly.tbl \
-	      --DC_NH_free        "" \
-	      --CSA_N1_free       "" \
-	      --CSA_N1_gly_free   "" \
-	      --HBDA              input/sln.hbda.tbl \
-	      --NOE               input/sln.hbnoe.tbl \
-	      --DIHE              input/sln.dihe.tbl \
-	      --DC_NH_max         10.735 \
-	      --nstructures       1000 \
-	      --CSA_N1_tensor     57.3 81.2 228.1 \
-	      --CSA_N1_tensor_gly 45.6 66.3 211.6 \
-	      --CSA_N1_beta       -17.0 \
-	      --CSA_N1_beta_gly   -21.6 \
-	      --tm_domain         12 24 \
-	      --immx_thickness    25.72 \
-	      --immx_nparameter   10 \
-	      --w_slf             5 \
-	      --w_r               3 \
-	      --seed              4534 \
-	      --highTempSteps     1000 \
-	      --initialTemp       350 \
-	      --finalTemp         2.5 \
-	      --stepTemp          1.25 \
-	      --annealSteps       201 \
-	      --unfold            no \
-	      --resetCenter       yes \
-	      --repelStart        no \
-	      --ezPot             "resid 0:31"
-	
-	# Mark best structures and move to folder
-	echo "Getting best refined structures according to XPLOR."
-	getBest -num 10 -symlinks
-	rm -rf out.refine
-	mkdir out.refine
-	mv *.sa* out.refine/
-	mv logfile* out.refine/
-	
-	# Run summary statistics
-	echo "Getting best refined structures using summary.py"
-	rm -rf summary.refine
-	mkdir summary.refine
-	cd summary.refine/
-	python3 ../summary.py \
-		--folders ../out.refine* \
-		--terms DIPL_w CS_w CDIH BOND ANGL IMPR EEFX \
-		--R_dc_work amide_NH_work \
-		--R_dc_err 0.5 \
-		--R_csa_work amide_N1_work amide_N1_gly_work \
-		--R_csa_err 5.0 > summary.out
-	cd ../
+```bash
+#!/bin/bash -l
+#SBATCH --time=24:00:00
+#SBATCH --ntasks=24
+#SBATCH --mem=16g
+#SBATCH --tmp=16g
+#SBATCH --mail-type=ALL  
+#SBATCH --mail-user=dweber@umn.edu
 
+cd /home/vegliag/dweber/xplor_data/20210325_SLN
 
+# Folding
+echo "Folding protein."
+xplor -py -smp 24 -o logfile.out hybrid.py \
+      --structure_in      summary.fold/top.0.sa \
+      --DC_NH_work        input/sln_dc.tbl \
+      --CSA_N1_work       input/sln_cs.tbl \
+      --CSA_N1_gly_work   input/sln_cs_gly.tbl \
+      --DC_NH_free        "" \
+      --CSA_N1_free       "" \
+      --CSA_N1_gly_free   "" \
+      --HBDA              input/sln.hbda.tbl \
+      --NOE               input/sln.hbnoe.tbl \
+      --DIHE              input/sln.dihe.tbl \
+      --DC_NH_max         10.735 \
+      --nstructures       1000 \
+      --CSA_N1_tensor     57.3 81.2 228.1 \
+      --CSA_N1_tensor_gly 45.6 66.3 211.6 \
+      --CSA_N1_beta       -17.0 \
+      --CSA_N1_beta_gly   -21.6 \
+      --tm_domain         12 24 \
+      --immx_thickness    25.72 \
+      --immx_nparameter   10 \
+      --w_slf             5 \
+      --w_r               3 \
+      --seed              4534 \
+      --highTempSteps     1000 \
+      --initialTemp       350 \
+      --finalTemp         2.5 \
+      --stepTemp          1.25 \
+      --annealSteps       201 \
+      --unfold            no \
+      --resetCenter       yes \
+      --repelStart        no \
+      --ezPot             "resid 0:31"
 
+# Mark best structures and move to folder
+echo "Getting best refined structures according to XPLOR."
+getBest -num 10 -symlinks
+rm -rf out.refine
+mkdir out.refine
+mv *.sa* out.refine/
+mv logfile* out.refine/
 
+# Run summary statistics
+echo "Getting best refined structures using summary.py"
+rm -rf summary.refine
+mkdir summary.refine
+cd summary.refine/
+python3 ../summary.py \
+	--folders ../out.refine* \
+	--terms DIPL_w CS_w CDIH BOND ANGL IMPR EEFX \
+	--R_dc_work amide_NH_work \
+	--R_dc_err 0.5 \
+	--R_csa_work amide_N1_work amide_N1_gly_work \
+	--R_csa_err 5.0 > summary.out
+cd ../
+```
+
+The calculation is basically the same as the folding stage, except for the following differences.
+
+1. The input structure is not unfolded at the start (--unfold 'no')
+
+2. The REPEL force field is not used (--repelStart 'no') and only 1000 steps of high temperature torsion dynamics is done (--highTempSteps 1000).
+
+3. The initial, final, and step temperatures are divided by 10 (--initialTemp 350, --finalTemp 2.5, --stepTemp 1.25).
+
+   
+
+Using this refinement, the total energy of the best structure is reduced from -126.66 to -175.39 (see [summary.out](examples/sln/output/refine/summary.out)) and the resulting bundle has a much better precision as observed below:
 
 <img src="examples/sln/output/refine/hybridTools_refine.jpg" width="800">
 
+The analyze.tcl output ([results_tilt6-28_azi16.dat](examples/sln/output/refine/results_tilt6-28_azi16.dat)) shows tilt and azimuthal angles of 22.3 +/- 0.5 degrees and 130.5 +/- 1.7 degrees, respectively. Note that small discrepancies of the angles with respect the PISA fitting to the experimental data generally result from the crudeness of the functions used to compute these angle from atomic coordinates. For example, usually the helix will have a bend/kink that makes defining the axis from just two center of masses a bit questionable. Structural distortions local the residue used to compute the azimuthal angle will also throw of the measurement (ideally use a residue center to the membrane). Therefore, these minor discrepancies are nothing to be alarmed about. 
 
+
+
+## Acknowledgments
+
+National Institutes of Health: 
+
+* R01 GM 064742 (Veglia, G.)
+* R01 HL 144130 (Veglia, G.)
+
+American Heart Association:
+
+* 19POST34420009 (Weber, D. K.)
 
