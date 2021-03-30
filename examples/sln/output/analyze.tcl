@@ -1,6 +1,6 @@
 source hybridTools.tcl
 
-# Select TM residues and CA to ca
+# Select TM residues and CA of residue (i-1) to calculation azimuthal angle
 set tm [atomselect top "resid 6 to 28"]
 set azi [atomselect top "resid 15 and name CA"]
 

@@ -267,36 +267,37 @@ In the folding protocol, the input structure is reset to a random coil prior to 
 
 ##### Summary statistics
 
-The above example will calculate 1000 structures and at the end will analyze them using the [summary.py](helpers/summary.py) script to produce a [summary.out](examples/sln/output/fold/summary.out) file. This script will find all *.sa files in the out.fold directory (more folders can be appended to this parameter) and rank structures according the lowest energy sum of the DIPL_w CS_w CDIH BOND ANGL IMPR EEFX terms. This will also determine the [R-values](https://pubs.acs.org/doi/10.1021/ja003380x) comparing agreement between the experimental and back-calculated CSA and DC restraints. Note that R-free (of non-working restraints) are computed by specifying options/values "--R_dc_free amide_NH_free" and "--R_csa_free amide_N1_free amide_N1_gly_free". Experimental and back-calculated CSAs and DCs by the top 10 models (default; specify --top X to summarize best X models) are listed at the end of the [summary.out](examples/sln/output/fold/summary.out) file, in which violations are indicated by *. The best X models (and .sa.viols) are also copied to working directory (top.N.sa format). 
+The above example will calculate 1000 structures and at the end will analyze them using the [summary.py](helpers/summary.py) script to produce a [summary.out](examples/sln/output/fold/summary.out) file. This script will find all *.sa files in the out.fold directory (more folders can be appended to this parameter) and rank structures according the lowest energy sum of the DIPL_w CS_w CDIH BOND ANGL IMPR EEFX terms. This will also determine the [R-values](https://pubs.acs.org/doi/10.1021/ja003380x) comparing agreement between the experimental and back-calculated CSA and DC restraints. Note that R-free (of non-working restraints) are computed by specifying options/values "--R_dc_free amide_NH_free" and "--R_csa_free amide_N1_free amide_N1_gly_free". Experimental and back-calculated CSAs and DCs by the top 10 models (default; specify --top X to summarize best X models) are listed at the end of the [summary.out](examples/sln/output/fold/summary.out) file, in which violations are indicated by *. The best X models (and .sa.viols) are also copied to working directory (top.<model>.sa format). 
 
 
 
 ##### Visualization in VMD
 
-At this point it is useful to visualize the top structures and analyze important features pertaining to membrane proteins such as: tilt and azimuthal (rotation) angles and depth of insertion in the membrane. VMD functions in [hybridTools.tcl](helpers/hybridTools.tcl) have been 
-
-To load the the 
+At this point it is useful to visualize the top structures and analyze important features pertaining to membrane proteins such as the tilt and azimuthal (rotation) angles, and depth of insertion in the membrane. VMD functions introduced by the [hybridTools.tcl](helpers/hybridTools.tcl) script streamlines this analysis. First load the top structures into VMD by entering the following into a UNIX command line:
 
 ```bash
+cd summary.fold/
 vmd top.*.sa
 ```
 
-or
+note that if there are more than 10 files, the structures wont be loaded in the correct order. If for example 20 structures are to be loaded, the order will likely be 0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 3, 4, 5, 6, 7, 8, 9. Therefore, in this case it would be safer to load with the use of the wild card *:
 
 ```bash
 vmd top.0.sa top.1.sa top.2.sa top.3.sa top.4.sa top.5.sa top.6.sa top.7.sa top.8.sa top.9.sa
 ```
 
-
+After loading the structures (visualize all at once using )
 
 The  [analyze.tcl](examples/sln/output/analyze.tcl) 
 
 
 
+<img src="examples/sln/output/fold/hybridTools_fold.jpg" width="800">
+
 ```tcl
 source hybridTools.tcl
 
-# Select TM residues and CA to ca
+# Select TM residues and CA of residue (i-1) to calculation azimuthal angle
 set tm [atomselect top "resid 6 to 28"]
 set azi [atomselect top "resid 15 and name CA"]
 
@@ -324,11 +325,27 @@ draw cylinder [list 0 0 [expr (-$thickness/2)+0.1]] [list 0 0 [expr (-$thickness
 
 
 
-<img src="examples/sln/output/fold/hybridTools_fold.jpg" width="800">
+In this example, the helix_topology function does the following to each model:
+
+1. Flips them so the the C-terminus is below the bottom leaflet (-inside C; i.e., it is an ER membrane protein).
+2. Measures the tilt angle using the vector between two center of masses (using only N, C, and CA atoms) assigned to the upper and lower halves of the helical segment. The angle is determined in the C -> N direction (-invert).
+3. Does a Z-rotation so that the helical segment is aligned perfectly along the X-axis and the X-component of the helix vector is positive.
+4. At this point, there is an option (-fix_tilt <angle>) to perform a Y-rotation to fix the tilt to a desire angle. This is not done here, but can be useful for aligning MD trajectories prior to back-calculating SLF spectra using [MD2SLF](https://github.com/weberdak/md2slf). Aligning trajectories like this, especially for single-pass helical proteins, will greatly reduce the convergence time of these calculations.
+5. Translates the protein so that the center of mass of the TM segment is at the origin (X = 0, Y = 0). Specifying "-no_z" ensures that the no Z-translations. This is important since the depth of insertion is a feature optimized by XPLOR-NIH and should not in anyway be manipulated.
+6. Calculates the azimuthal angle based on the center of mass of the $azi selection, which in this case it is the CA of V15 to provide the azimuthal angle of L16 as per the convention used by [Denny et al. 2001](https://www.sciencedirect.com/science/article/abs/pii/S109078070192405X?via%3Dihub) and the [PISA-SPARKY and pisa.py](https://github.com/weberdak/pisa.py) tools used to fit experimental data. To calculate this:
+   1.  The helix is temporarily rotated to zero degrees.
+   2. A center of mass is determined using the N, C, and CA backbone atoms of residues i-2 to i+2.
+   3. The vector from $azi to the local helical center of mass is determined.
+   4. The azimuthal angle is then determined the to magnitudes of the X and Y components of this vector.
+   5. The helix tilt readjustment done at step 6.1 is reversed.
 
 
 
+The tilt and azimuthal angles for each model are recorded in the results_tilt6-28_azi16.dat file. All models (now aligned) are then written to separate PDBs for publication, deposition, analysis using other visualization package, etc, and the membrane leaflets are drawn. In general, a good calculation will typically show:
 
+1. Polar sidechains should be directed towards the upper (azimuthal angle = 0 degrees) and lower (180 degrees) leaflets.
+2. Amphipathic helix at the inter-facial regions
+3. Helical length and tilt angle matched to the bilayer thickness.
 
 
 
