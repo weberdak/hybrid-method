@@ -1,7 +1,7 @@
 # SIMPLE PROTOCOL TO FOLD OR REFINE MEMBRANE PROTEIN STRUCTURES
 # WITH OS-ssNMR CSA AND DC RESTRAINTS
 #
-# Written by D. K. Weber, Veglia Lab (last revised Mar 26 2021)
+# Written by D. K. Weber, Veglia Lab (last revised April 3 2021)
 #
 # DESCRIPTION
 # -----------
@@ -13,14 +13,14 @@
 # --------
 # This follows the refinement protocol from Tian...Marassi, 2015, DOI: 10.1016/j.bpj.2015.06.047
 # The template in the XPLOR-NIH tutorials (eefx-membrane) was used predominantly, but modified
-# to used DC/CSA restraints according to Veglia lab preferences.
+# to used DC/CSA restraints according to Veglia lab preferences. Also updated to use RepelPot.
 #
-# 0. Input PDB structure. Optionally unfold at loading and prior to dynamics (--unfold)*.
+# 0. Input PDB structure. Optionally unfold at loading and prior to dynamics 
 # 1. Initial torsion angle minimization (100 steps)
-# 2. Center protein (--resetCenter)* to membrane then high temperature torsion dynamics with RepelPot (A K for 3000 steps) (--repelStart)*
-# 3. Center protein (--resetCenter)* then high temperature torsions dynamics phasing in EEFx parameters (A K for 3000 steps) (--repelStart)*
-# 4. Center protein (--resetCenter)* then high temperature torsion dynamics with only EEFx paramters (A K for B steps)
-# 5. Center protein (--resetCenter)* again then simulated annealing (A K to C K in D K steps, E steps per increment)
+# 2. Center protein* to membrane then high temperature torsion dynamics with RepelPot (A K for 3000 steps)
+# 3. Center protein* then high temperature torsions dynamics phasing in EEFx parameters (A K for 3000 steps)
+# 4. Center protein* then high temperature torsion dynamics with only EEFx paramters (A K for B steps)
+# 5. Center protein* again then simulated annealing (A K to C K in D K steps, E steps per increment)
 # 6. Minimize insertion depth (Z-position) using knowledge-based Ez-Potential*
 # 7. Powell torsion angle minimization (500 steps)
 # 8. Powell Cartesian minimization (500 steps)
@@ -28,13 +28,12 @@
 
 # RECOMMENDED SETTINGS
 # --------------------
-# Fold: unfold = 'yes', A(--initialTemp)=3500, B(--highTempSteps)=25000, 
-#       C(--finalTemp)=25, D(--stepTemp)=12.5, E(--annealSteps)=201, 
-#       --nstructures=1000, resetCenter = 'yes', ezPot = 'resid i:j' (i = first resid, j = last resid)
+# Fold: Unfold = 'yes', A=3500, B=25000, C=25, D=12.5, E=201, nstructures = 512 (take top 5), 
+#       setCenter = 'yes', ezPot = 'resid 0:n' (n = last resid)
 # 
-# Refine: unfold = 'no', A(--initialTemp)=350, B(--highTempSteps)=1000, 
-#       C(--finalTemp)=2.5, D(--stepTemp)=1.25, E(--annealSteps)=201, 
-#       --nstructures=1000, resetCenter = 'yes', ezPot = 'resid i:j' (i = first resid, j = last resid)
+# Refine: Unfold = 'no', A=350, B=25000, C=2.5, D=1.25, E=201, nstructures = 128 for each of top 5 structures from folding, 
+#         setCenter = 'no', ezPot = '' (don't apply)
+
 
 # ARGUMENT PARSER
 # ===============================================================================
@@ -159,7 +158,7 @@ def parse_args():
     )
     parser.add_argument(
         '--repelStart', type=str, choices=['yes', 'no'], 
-        help='Implement two initial high-temperature torsion dynamics stages using REPEL. Default: yes', default='yes'
+        help='Implement two initial high-temperature torsion dynamics stages using REPEL. Only valid if using EEFX forcefield. Default: yes', default='yes'
     )
     parser.add_argument(
         '--resetCenter', type=str, choices=['yes', 'no'], 
@@ -169,7 +168,10 @@ def parse_args():
         '--ezPot', type=str, 
         help='Use EzPot to position . Default: None', default=''
     )
-    
+    parser.add_argument(
+        '--eefx', type=str, choices=['yes', 'no'], 
+        help='Use EEFX forcefield. If no, then RepelPot is used. Default: yes', default='yes'
+    )
     args = parser.parse_args()
     return args
 
@@ -207,8 +209,9 @@ fin_cs    = fin_dihd * w_slf * 1/(w_r+1)     # CSA force final
 # INITIALIZE STRUCTURE
 # ===============================================================================
 structure_in = args.structure_in
-import eefxPotTools
-eefxPotTools.initEEFx()
+if args.eefx == 'yes':
+    import eefxPotTools
+    eefxPotTools.initEEFx()
 ini_model=structure_in
 protocol.loadPDB(ini_model, deleteUnknownAtoms=True)
 #import psfGen
@@ -490,44 +493,62 @@ print(eefx.showParam())
 eefx.setThickness(immx_thickness)
 eefx.setProfileN(immx_nparameter)
 eefx.setA(0.85)
-pots.append(eefx)
 setCenter(immx_com, Zpos)		# Translate selected center of mass to IMMx Zpos.
-highTempParams1.append(StaticRamp("eefx.setScale(0)"))
-highTempParams.append(StaticRamp("eefx.setScale(0.004)"))
-rampedParams.append(MultRamp(0.004,1.0,"eefx.setScale(VALUE)"))
-lowTempParams.append(StaticRamp("eefx.setScale(1.0)"))
+# only apply restraints if eefx is specified
+if args.eefx == 'yes':
+    pots.append(eefx)
+    highTempParams1.append(StaticRamp("eefx.setScale(0)"))
+    highTempParams.append(StaticRamp("eefx.setScale(0.004)"))
+    rampedParams.append(MultRamp(0.004,1.0,"eefx.setScale(VALUE)"))
+    lowTempParams.append(StaticRamp("eefx.setScale(1.0)"))
 
 
 # INITIALIZE REPEL FOR FIRST STAGES OF TORSION DYNAMICS
 #===============================================================================
-pots.append(XplorPot('VDW'))          # dflt scale [1]
-highTempParams1.append(StaticRamp("pots['VDW'].setScale(0.004)"))
-highTempParams1.append(StaticRamp("""protocol.initNBond(cutnb=100,
+if args.eefx == 'yes':
+    pots.append(XplorPot('VDW'))          # dflt scale [1]
+    highTempParams1.append(StaticRamp("pots['VDW'].setScale(0.004)"))
+    highTempParams1.append(StaticRamp("""protocol.initNBond(cutnb=100,
                                                          repel=1.2,
                                                          nbxmod=4,
                                                          tolerance=45,
                                                          onlyCA=1)"""))
-# standard all-atom repel
-highTempParams2.append(StaticRamp("protocol.initNBond(nbxmod=4)"))
-highTempParams2.append(StaticRamp("pots['VDW'].setScale(0.1)"))
-highTempParams.append(StaticRamp("pots['VDW'].setScale(0)"))
-rampedParams.append(StaticRamp("pots['VDW'].setScale(0)"))
-lowTempParams.append(StaticRamp("pots['VDW'].setScale(0)"))
+    # standard all-atom repel
+    highTempParams2.append(StaticRamp("protocol.initNBond(nbxmod=4)"))
+    highTempParams2.append(StaticRamp("pots['VDW'].setScale(0.1)"))
+    highTempParams.append(StaticRamp("pots['VDW'].setScale(0)"))
+    rampedParams.append(StaticRamp("pots['VDW'].setScale(0)"))
+    lowTempParams.append(StaticRamp("pots['VDW'].setScale(0)"))
 
-# Should update with RepelPot but having issues with crashes.
-#from repelPotTools import create_RepelPot,initRepel
-#repel = create_RepelPot('repel')
-#pots.append(repel)
-#highTempParams1.append(StaticRamp("""initRepel(repel,
-#                                                        use14=True,
-#                                                        scale=0.004,
-#                                                        repel=1.2,
-#                                                        moveTol=45,
-#                                                        interactingAtoms='name CA')"""))
-#highTempParams2.append(StaticRamp("pots['repel'].setScale(0.1)"))
-#highTempParams.append(StaticRamp("pots['repel'].setScale(0)"))
-#rampedParams.append(StaticRamp("pots['repel'].setScale(0)"))
-#lowTempParams.append(StaticRamp("pots['repel'].setScale(0)"))
+
+# INITIALIZE REPELPOT IF NOT USING EEFX
+#===============================================================================
+repelStart = args.repelStart
+if args.eefx == 'no':
+    # Turn off repelStart (if accidentally set to 'yes') option
+    # used to phase in EEFX params
+    repelStart = 'no'
+    
+    from repelPotTools import create_RepelPot,initRepel
+    repel = create_RepelPot('repel')
+    pots.append(repel)
+    rampedParams.append( StaticRamp("initRepel(repel,use14=False)") )
+    rampedParams.append( MultRamp(.004,4,  "repel.setScale( VALUE)") )
+    # nonbonded interaction only between CA atoms
+    highTempParams.append( StaticRamp("""initRepel(repel,
+                                               use14=True,
+                                               scale=0.004,
+                                               repel=1.2,
+                                               moveTol=45,
+                                               interactingAtoms='name CA'
+                                               )""") )
+
+    # Selected 1-4 interactions.
+    import torsionDBPotTools
+    repel14 = torsionDBPotTools.create_Terminal14Pot('repel14')
+    pots.append(repel14)
+    highTempParams.append(StaticRamp("repel14.setScale(0)"))
+    rampedParams.append(MultRamp(0.004, 4, "repel14.setScale(VALUE)"))
 
 
 # EZ-POTENTIAL
@@ -538,7 +559,7 @@ if args.ezPot:
     Ezt= EzPot("EZt")
     Ezt.setScale(1)
     Ezt.setXYCenter(0)
-    Ezt.setThickness(immx_thickness)
+    Ezt.setThickness(args.immx_thickness)
     Ez_pots.append(Ezt)
 
 
@@ -610,13 +631,13 @@ def calcOneStructure(loopInfo):
     # High temperature dynamics.
     #===========================================================================
     # Start with REPEL to remove clashes then phase out
-    if args.repelStart == 'yes':
+    if repelStart == 'yes':
         # High temperature dynamics stage 1.
         protocol.initDynamics(dyn,
                               potList=pots,         # potential terms to use.
                               bathTemp=ini_temp,    # set bath temperature.
                               initVelocities=1,     # uniform initial velocities.
-                              finalTime=3,          # run for finalTime or
+                              finalTime=30,          # run for finalTime or
                               numSteps=3001,        # numSteps * 0.001, whichever is less.
                               printInterval=100)    # printing rate in steps.
         dyn.setETolerance(ini_temp/100)             # used to det. stepsize, dflt [temp/1000].
@@ -630,7 +651,7 @@ def calcOneStructure(loopInfo):
                               potList=pots,         # potential terms to use.
                               bathTemp=ini_temp,    # set bath temperature.
                               initVelocities=1,     # uniform initial velocities.
-                              finalTime=3,          # run for finalTime or
+                              finalTime=30,          # run for finalTime or
                               numSteps=3001,        # numSteps * 0.001, whichever is less.
                               printInterval=100)    # printing rate in steps.
         dyn.setETolerance(ini_temp/100)             # used to det. stepsize, dflt [temp/1000].
@@ -645,7 +666,7 @@ def calcOneStructure(loopInfo):
                           bathTemp=ini_temp,             # set bath temperature.
                           initVelocities=1,              # uniform initial velocities.
                           numSteps=highTempSteps,        # numSteps * 0.001, whichever is less.
-                          finalTime=highTempSteps/1000,	 # run for finalTime or
+                          finalTime=highTempSteps/100,	 # run for finalTime or
                           printInterval=100)             # printing rate in steps.
     dyn.setETolerance(ini_temp/100)                      # used to det. stepsize, dflt [temp/1000].
     dyn.run()
@@ -683,9 +704,9 @@ def calcOneStructure(loopInfo):
         m.setETolerance(1e-7)
         m.setPrintInterval(1)
         groupList=m.groupList()
-        groupList.append(select('resid 0:35'))
+        groupList.append(select(args.ezPot))
         m.setGroupList(groupList)
-        m.setHingeList([('translate', select('resid 0:35')),])
+        m.setHingeList([('translate', select(args.ezPot)),])
         m.potList().removeAll()
         m.potList().add(Ezt)
         m.run()
