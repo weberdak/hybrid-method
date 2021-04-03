@@ -34,7 +34,8 @@ List of XPLOR-NIH potentials/classes currently applied in the [hybrid-method.py]
 * [XplorPot HBDA and HBDB](https://nmr.cit.nih.gov/xplor-nih/doc/current/python/ref/protocol.html) for hydrogen bonds
 * [noePotTools](https://nmr.cit.nih.gov/xplor-nih/doc/current/python/ref/noePotTools.html) for distance restraints
 * [eefxPotTools](https://nmr.cit.nih.gov/xplor-nih/doc/current/python/ref/eefxPotTools.html) for non-bonded terms and implicit membrane
-* [EzPot](https://nmr.cit.nih.gov/xplor-nih/doc/current/python/ref/membraneTools.html) for optimizing the depth of insertion.
+* [EzPot](https://nmr.cit.nih.gov/xplor-nih/doc/current/python/ref/membraneTools.html) for optimizing the depth of insertion
+* [repelPotTools](https://nmr.cit.nih.gov/xplor-nih/doc/current/python/ref/repelPotTools.html) option to use RepelPot instead of the EEFx forcefield
 
 
 ## Installation
@@ -170,6 +171,7 @@ xplor -py -smp 24 -o logfile.out hybrid.py \
       --CSA_N1_tensor_gly 45.6 66.3 211.6 \
       --CSA_N1_beta       -17.0 \
       --CSA_N1_beta_gly   -21.6 \
+      --eefx              yes \
       --tm_domain         12 24 \
       --immx_thickness    25.72 \
       --immx_nparameter   10 \
@@ -221,7 +223,7 @@ Alternatively, the script can be slightly modified and run locally by:
 bash hybrid_fold.sh
 ```
 
-Ready-to-run examples are included in this repository: [sln_local.tar.xz](examples/sln/sln_local.tar.xz) (local PC) and [sln_slurm.tar.xz](examples/sln/sln_slurm.tar.xz) (remote CPU cluster using the SLURM scheduler). Running calculations through shell script avoids having to edit the hybrid.py program each time, which requires a good understanding of both XPLOR-NIH and Python scripting. This generic method is a good starting point to solving the structure and topology of simple single-pass helical membrane proteins. However, if more complicated systems are to be solved, such as multi-pass proteins, beta-barrels and oligomers, the hybrid.py and BASH scripts will have to be developed further to handle additional restraint types.
+Ready-to-run examples are included in this repository: [sln_local.tar.xz](examples/sln/sln_local.tar.xz) (local PC) and [sln_slurm.tar.xz](examples/sln/sln_slurm.tar.xz) (remote CPU cluster using the SLURM scheduler). Examples for using RepelPot instead of EEFx are also included: [sln_local_repelPot.tar.xz](examples/sln/sln_local_repelPot.tar.xz) and [sln_slurm_repelPot.tar.xz](examples/sln/sln_slurm_repelPot.tar.xz). Running calculations through shell script avoids having to edit the hybrid.py program each time, which requires a good understanding of both XPLOR-NIH and Python scripting. This generic method is a good starting point to solving the structure and topology of simple single-pass helical membrane proteins. However, if more complicated systems are to be solved, such as multi-pass proteins, beta-barrels and oligomers, the hybrid.py and BASH scripts will have to be developed further to handle additional restraint types.
 
 
 
@@ -385,6 +387,7 @@ xplor -py -smp 24 -o logfile.out hybrid.py \
       --CSA_N1_tensor_gly 45.6 66.3 211.6 \
       --CSA_N1_beta       -17.0 \
       --CSA_N1_beta_gly   -21.6 \
+      --eefx              yes \
       --tm_domain         12 24 \
       --immx_thickness    25.72 \
       --immx_nparameter   10 \
