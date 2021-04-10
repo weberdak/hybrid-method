@@ -111,6 +111,7 @@ def r_value(viols_file, search_terms, err, rtype):
 def r_output(indata, err):
     c = 0
     data = dict()
+    viols = dict()
     mods = []
     rids = []
     for l in indata:
@@ -122,21 +123,24 @@ def r_output(indata, err):
                 else:
                     calc_s = str(calc)+'*'
                     data[resid].append(calc_s.ljust(10))
+                    viols[resid] += 1
             except:
+                viols[resid] = 0
                 if abs(abs(obs)-abs(calc)) <= err:
                     calc_s = str(calc)
                     data[resid] = [resname.ljust(10), str(obs).ljust(10), calc_s.ljust(10)]
                 else:
                     calc_s = str(calc)+'*'
                     data[resid] = [resname.ljust(10), str(obs).ljust(10), calc_s.ljust(10)]
+                    viols[resid] += 1
                 rids.append(resid)
         mods.append(str(c).ljust(10))
         c += 1
 
     rids = sorted(rids)
-    print('RESID'.ljust(10)+' '+'RESNAME'.ljust(10)+' '+'OBS'.ljust(10)+' '+' '.join(mods))
+    print('RESID'.ljust(10)+' '+'RESNAME'.ljust(10)+' '+'OBS'.ljust(10)+' '+' '.join(mods)+' '+'VIOLS')
     for i in rids:
-        print(str(i).ljust(10)+' '+' '.join(data[i]))
+        print(str(i).ljust(10)+' '+' '.join(data[i])+' '+str(viols[i]))
 
 
 def main():
