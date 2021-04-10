@@ -282,10 +282,10 @@ cd summary.fold/
 vmd top.*.sa
 ```
 
-note that if there are more than 10 files, the structures wont be loaded in the correct order. If for example 20 structures are to be loaded, the order will likely be 0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 3, 4, 5, 6, 7, 8, 9. Therefore, in this case it would be safer to load with the use of the wild card *:
+note that if there are more than 10 files, the structures wont be loaded in the correct order. If for example 20 structures are to be loaded, the order will likely be 0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 3, 4, 5, 6, 7, 8, 9. Therefore, in this case the structures will have be sorted prior to loading by:
 
 ```bash
-vmd top.0.sa top.1.sa top.2.sa top.3.sa top.4.sa top.5.sa top.6.sa top.7.sa top.8.sa top.9.sa
+ vmd $(ls top.*.sa | sort -V)
 ```
 
 After loading the structures (visualize all at once using Graphics -> Representations -> Trajectory -> enter "0:1:9" in "Draw Multiple Frames" box) you will notice that the structures are scattered around and hard to compare. However, while these structures look different, they are essentially identical according to OS-ssNMR observables since they are degenerate with respect to Z-axis rotations and 180 degrees rotations about the X- or Y-axis. Typically one would do an RMSD fit to align structures, however, this will introduce unwanted rotations and translation that will prevent us from assessing the precision of the tilt/azimuthal angles and depth-of-insertions determined by the XPLOR calculation. While computing the tilt/azimuthal angles, the [hybridTools.tcl](helpers/hybridTools.tcl) functions will also do an alignment that will not affect this information. The complete analysis of the structural bundle can be done by the [analyze.tcl](examples/sln/output/analyze.tcl) script, run using the VMD Tk Console (Extensions -> Tk Console) by: 
