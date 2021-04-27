@@ -1,7 +1,7 @@
 # SIMPLE PROTOCOL TO FOLD OR REFINE MEMBRANE PROTEIN STRUCTURES
 # WITH OS-ssNMR CSA AND DC RESTRAINTS
 #
-# Written by D. K. Weber, Veglia Lab (last revised April 3 2021)
+# Written by D. K. Weber, Veglia Lab (last revised April 26 2021)
 #
 # DESCRIPTION
 # -----------
@@ -29,10 +29,10 @@
 # RECOMMENDED SETTINGS
 # --------------------
 # Fold: Unfold = 'yes', A=3500, B=25000, C=25, D=12.5, E=201, nstructures = 512 (take top 5), 
-#       setCenter = 'yes', ezPot = 'resid 0:n' (n = last resid)
+#       resetCenter = 'yes', ezPot = 'resid 0:n' (n = last resid), rampeefx = yes
 # 
-# Refine: Unfold = 'no', A=350, B=25000, C=2.5, D=1.25, E=201, nstructures = 128 for each of top 5 structures from folding, 
-#         setCenter = 'no', ezPot = '' (don't apply)
+# Refine: Unfold = 'no', A=315, B=10000, C=2.5, D=1.25, E=201, nstructures = 512 for each of top 5 structures from folding, 
+#         resetCenter = 'no', ezPot = '', rampeefx = no
 
 
 # ARGUMENT PARSER
@@ -171,6 +171,10 @@ def parse_args():
     parser.add_argument(
         '--eefx', type=str, choices=['yes', 'no'], 
         help='Use EEFX forcefield. If no, then RepelPot is used. Default: yes', default='yes'
+    )
+    parser.add_argument(
+        '--rampeefx', type=str, choices=['yes', 'no'], 
+        help='Ramp EEFX scale during simulated annealing. Default: yes', default='yes'
     )
     args = parser.parse_args()
     return args
@@ -498,8 +502,12 @@ setCenter(immx_com, Zpos)		# Translate selected center of mass to IMMx Zpos.
 if args.eefx == 'yes':
     pots.append(eefx)
     highTempParams1.append(StaticRamp("eefx.setScale(0)"))
-    highTempParams.append(StaticRamp("eefx.setScale(0.004)"))
-    rampedParams.append(MultRamp(0.004,1.0,"eefx.setScale(VALUE)"))
+    if args.rampeefx == 'yes':
+        highTempParams.append(StaticRamp("eefx.setScale(0.004)"))
+        rampedParams.append(MultRamp(0.004,1.0,"eefx.setScale(VALUE)"))
+    if args.rampeefx == 'no':
+        highTempParams.append(StaticRamp("eefx.setScale(1.0)"))
+        rampedParams.append(StaticRamp("eefx.setScale(1.0)"))
     lowTempParams.append(StaticRamp("eefx.setScale(1.0)"))
 
 
