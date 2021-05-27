@@ -3,28 +3,10 @@ assign
  ( resid 9999 and name Z )
  ( resid 9999 and name X )
  ( resid 9999 and name Y )
- ( resid 4 and name N )
- ( resid 4 and name HN )
- ( resid 3 and name C )
- -5.647 5.000 5.000
-assign
- ( resid 9999 and name OO )
- ( resid 9999 and name Z )
- ( resid 9999 and name X )
- ( resid 9999 and name Y )
- ( resid 5 and name N )
- ( resid 5 and name HN )
- ( resid 4 and name C )
- 57.996 5.000 5.000
-assign
- ( resid 9999 and name OO )
- ( resid 9999 and name Z )
- ( resid 9999 and name X )
- ( resid 9999 and name Y )
- ( resid 6 and name N )
- ( resid 6 and name HN )
- ( resid 5 and name C )
- 62.711 5.000 5.000
+ ( resid 1 and name N )
+ ( resid 1 and name HN )
+ ( resid 0 and name C )
+ -29.522 5.000 5.000
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -57,15 +39,6 @@ assign
  ( resid 9999 and name Z )
  ( resid 9999 and name X )
  ( resid 9999 and name Y )
- ( resid 10 and name N )
- ( resid 10 and name HN )
- ( resid 9 and name C )
- 45.056 5.000 5.000
-assign
- ( resid 9999 and name OO )
- ( resid 9999 and name Z )
- ( resid 9999 and name X )
- ( resid 9999 and name Y )
  ( resid 11 and name N )
  ( resid 11 and name HN )
  ( resid 10 and name C )
@@ -88,6 +61,24 @@ assign
  ( resid 13 and name HN )
  ( resid 12 and name C )
  99.084 5.000 5.000
+assign
+ ( resid 9999 and name OO )
+ ( resid 9999 and name Z )
+ ( resid 9999 and name X )
+ ( resid 9999 and name Y )
+ ( resid 14 and name N )
+ ( resid 14 and name HN )
+ ( resid 13 and name C )
+ 48.802 5.000 5.000
+assign
+ ( resid 9999 and name OO )
+ ( resid 9999 and name Z )
+ ( resid 9999 and name X )
+ ( resid 9999 and name Y )
+ ( resid 15 and name N )
+ ( resid 15 and name HN )
+ ( resid 14 and name C )
+ 57.829 5.000 5.000
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -120,19 +111,19 @@ assign
  ( resid 9999 and name Z )
  ( resid 9999 and name X )
  ( resid 9999 and name Y )
- ( resid 19 and name N )
- ( resid 19 and name HN )
- ( resid 18 and name C )
- 73.407 5.000 5.000
+ ( resid 20 and name N )
+ ( resid 20 and name HN )
+ ( resid 19 and name C )
+ 101.151 5.000 5.000
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
  ( resid 9999 and name X )
  ( resid 9999 and name Y )
- ( resid 20 and name N )
- ( resid 20 and name HN )
- ( resid 19 and name C )
- 101.151 5.000 5.000
+ ( resid 21 and name N )
+ ( resid 21 and name HN )
+ ( resid 20 and name C )
+ 66.056 5.000 5.000
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )
@@ -160,6 +151,15 @@ assign
  ( resid 24 and name HN )
  ( resid 23 and name C )
  94.422 5.000 5.000
+assign
+ ( resid 9999 and name OO )
+ ( resid 9999 and name Z )
+ ( resid 9999 and name X )
+ ( resid 9999 and name Y )
+ ( resid 25 and name N )
+ ( resid 25 and name HN )
+ ( resid 24 and name C )
+ 45.056 5.000 5.000
 assign
  ( resid 9999 and name OO )
  ( resid 9999 and name Z )

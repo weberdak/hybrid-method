@@ -1,0 +1,394 @@
+
+  Violation Analysis 
+
+
+  Nonbonded RepelPot Violations
+        threshold: 0.200000
+        scale: 4.00
+
+                                                      actual  allowed
+                atom1                      atom2        dist   dist   diff   energy
+______________________________________________________________________________
+  selection pair  0: (not PSEUDO) [ 559 atoms ]
+                     (not PSEUDO) [ 559 atoms ]
+
+========= Repel Parameters =========
+ Simulation:       XplorSimulation
+ Number of atoms:  573
+ move tolerance:   0.5
+ 14 interactions:  off
+ radius scale:     0.9
+ max radius:       4.866
+ min neighbors:    0
+ max neighbors:    51
+ ave neighbors:    14.8342
+ num of sel pairs: 1
+========================================
+
+
+  Nonbonded RepelPot Violations
+        threshold: 0.200000
+        scale: 4.00
+
+                                                      actual  allowed
+                atom1                      atom2        dist   dist   diff   energy
+______________________________________________________________________________
+  selection pair  0: ((segid "" and resid 0 and (name HB#)) and (not PSEUDO)                   ) [ 3 atoms ]
+                     ((segid "" and resid 0 and (name HA or name N or name C)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair  1: ((segid "" and resid 1 and (name HE#)) and (not PSEUDO)) [ 3 atoms ]
+                     ((segid "" and resid 1 and (name CG)) and (not PSEUDO) ) [ 1 atoms ]
+  selection pair  2: ((segid "" and resid 3 and (name HG2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 3 and (name HB or name CG1 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair  3: ((segid "" and resid 3 and (name HD1#)) and (not PSEUDO)           ) [ 3 atoms ]
+                     ((segid "" and resid 3 and (name HG1# or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair  4: ((segid "" and resid 5 and (name HG2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 5 and (name HB or name OG1 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair  5: ((segid "" and resid 5 and (name HG1)) and (not PSEUDO)                      ) [ 1 atoms ]
+                     ((segid "" and resid 5 and (name HB or name CG2 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair  6: ((segid "" and resid 8 and (name HD1#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 8 and (name HG or name CD2 or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair  7: ((segid "" and resid 8 and (name HD2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 8 and (name HG or name CD1 or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair  8: ((segid "" and resid 10 and (name HD1#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 10 and (name HG or name CD2 or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair  9: ((segid "" and resid 10 and (name HD2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 10 and (name HG or name CD1 or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 10: ((segid "" and resid 13 and (name HG2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 13 and (name HB or name OG1 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 11: ((segid "" and resid 13 and (name HG1)) and (not PSEUDO)                      ) [ 1 atoms ]
+                     ((segid "" and resid 13 and (name HB or name CG2 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 12: ((segid "" and resid 14 and (name HG2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 14 and (name HB or name CG1 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 13: ((segid "" and resid 14 and (name HD1#)) and (not PSEUDO)           ) [ 3 atoms ]
+                     ((segid "" and resid 14 and (name HG1# or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 14: ((segid "" and resid 15 and (name HG1#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 15 and (name HB or name CG2 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 15: ((segid "" and resid 15 and (name HG2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 15 and (name HB or name CG1 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 16: ((segid "" and resid 16 and (name HD1#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 16 and (name HG or name CD2 or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 17: ((segid "" and resid 16 and (name HD2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 16 and (name HG or name CD1 or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 18: ((segid "" and resid 17 and (name HG2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 17 and (name HB or name CG1 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 19: ((segid "" and resid 17 and (name HD1#)) and (not PSEUDO)           ) [ 3 atoms ]
+                     ((segid "" and resid 17 and (name HG1# or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 20: ((segid "" and resid 18 and (name HG2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 18 and (name HB or name OG1 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 21: ((segid "" and resid 18 and (name HG1)) and (not PSEUDO)                      ) [ 1 atoms ]
+                     ((segid "" and resid 18 and (name HB or name CG2 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 22: ((segid "" and resid 19 and (name HG1#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 19 and (name HB or name CG2 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 23: ((segid "" and resid 19 and (name HG2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 19 and (name HB or name CG1 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 24: ((segid "" and resid 20 and (name HG2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 20 and (name HB or name CG1 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 25: ((segid "" and resid 20 and (name HD1#)) and (not PSEUDO)           ) [ 3 atoms ]
+                     ((segid "" and resid 20 and (name HG1# or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 26: ((segid "" and resid 21 and (name HD1#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 21 and (name HG or name CD2 or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 27: ((segid "" and resid 21 and (name HD2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 21 and (name HG or name CD1 or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 28: ((segid "" and resid 22 and (name HE#)) and (not PSEUDO)) [ 3 atoms ]
+                     ((segid "" and resid 22 and (name CG)) and (not PSEUDO) ) [ 1 atoms ]
+  selection pair 29: ((segid "" and resid 24 and (name HD1#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 24 and (name HG or name CD2 or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 30: ((segid "" and resid 24 and (name HD2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 24 and (name HG or name CD1 or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 31: ((segid "" and resid 25 and (name HD1#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 25 and (name HG or name CD2 or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 32: ((segid "" and resid 25 and (name HD2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 25 and (name HG or name CD1 or name CB)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 33: ((segid "" and resid 26 and (name HG1#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 26 and (name HB or name CG2 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 34: ((segid "" and resid 26 and (name HG2#)) and (not PSEUDO)                     ) [ 3 atoms ]
+                     ((segid "" and resid 26 and (name HB or name CG1 or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 35: ((segid "" and resid 28 and (name HG)) and (not PSEUDO)            ) [ 1 atoms ]
+                     ((segid "" and resid 28 and (name HB# or name CA)) and (not PSEUDO)) [ 3 atoms ]
+  selection pair 36: ((segid "" and resid 29 and (name HH)) and (not PSEUDO) ) [ 1 atoms ]
+                     ((segid "" and resid 29 and (name CE#)) and (not PSEUDO)) [ 2 atoms ]
+  selection pair 37: ((segid "" and resid 31 and (name HH)) and (not PSEUDO) ) [ 1 atoms ]
+                     ((segid "" and resid 31 and (name CE#)) and (not PSEUDO)) [ 2 atoms ]
+
+========= Repel Parameters =========
+ Simulation:       XplorSimulation
+ Number of atoms:  573
+ move tolerance:   0.5
+ 14 interactions:  on
+ e14 factor:       1
+ radius scale:     0.9
+ max radius:       4.866
+ min neighbors:    0
+ max neighbors:    16
+ ave neighbors:    0.975567
+ num of sel pairs: 38
+========================================
+
+
+   Violations in XPLOR term     ANGL
+             threshold: 5.000000
+
+ (atom-i        |atom-j        |atom-k        )  angle    equil.     delta    energy  const. 
+
+ Number of violations greater    5.000:     0
+ RMS deviation=   0.316
+
+XplorPot.scale: 1.00
+
+   Violations in XPLOR term     BOND
+             threshold: 0.050000
+
+ (atom-i        |atom-j        )    dist.   equil.   delta    energy   const. 
+
+ Number of violations greater    0.050:     0
+ RMS deviation=   0.001
+
+XplorPot.scale: 1.00
+
+   Violations in XPLOR term     CDIH
+             threshold: 5.000000
+
+ Total number of dihedral angle restraints=    51
+  overall scale =    1.0000
+ Number of dihedral angle restraints=   51
+ Number of violations greater than    5.000:     0
+ RMS deviation=   0.000
+
+XplorPot.scale: 200.00
+
+   Violations in XPLOR term     HBDA
+             threshold: 0.000000
+
+The following HBDA is greater than the cutoff:
+(calc hbda) (Rho) (Theta)
+class BACK    
+
+XplorPot.scale: 1.00
+
+   XPLOR term     HBDB 
+
+ 
+Nstep =    838677
+ 
+Free  HB list:
+ 
+  #   CO      HN     dir_type   lin_type O-H  C-O-H Ca-C-O-H O-H-N   Edir  Elin
+ 
+  1    5       9     a N-t & cent i/i+4 2.17  157.0 -153.2  167.8   -3.07  0.53
+  2    6      10     a N-t & cent i/i+4 1.97  145.9 -110.0  160.4   -5.00  0.02
+  3    7      11     a N-t & cent i/i+4 2.12  145.0 -121.0  159.4   -5.37  0.00
+  4    8      12     a N-t & cent i/i+4 1.95  147.4 -135.1  152.1   -5.55  0.88
+  5    9      13     a N-t & cent i/i+4 1.92  153.8 -133.1  152.4   -5.88  1.09
+  6   10      14     a N-t & cent i/i+4 2.10  147.9 -130.4  157.1   -5.75  0.05
+  7   11      15     a N-t & cent i/i+4 2.05  151.7 -112.7  167.3   -5.06  0.30
+  8   12      16     a N-t & cent i/i+4 2.06  137.5 -112.6  147.4   -4.23  0.92
+  9   13      17     a N-t & cent i/i+4 1.97  147.3 -111.2  159.7   -5.30  0.02
+ 10   14      18     a N-t & cent i/i+4 2.15  145.1 -126.4  156.7   -5.58  0.00
+ 11   15      19     a N-t & cent i/i+4 2.14  142.1 -122.5  153.4   -4.85  0.13
+ 12   16      20     a N-t & cent i/i+4 2.12  150.8 -130.5  161.4   -5.67  0.00
+ 13   17      21     a N-t & cent i/i+4 2.05  151.6 -123.0  165.3   -5.54  0.30
+ 14   18      22     a N-t & cent i/i+4 1.96  149.7 -117.6  161.2   -5.72  0.02
+ 15   19      23     a N-t & cent i/i+4 2.00  148.6 -121.5  156.9   -5.96  0.18
+ 16   20      24     a N-t & cent i/i+4 2.16  149.9 -128.5  160.0   -5.55  0.05
+ 17   21      25     a N-t & cent i/i+4 2.00  149.7 -135.9  155.9   -5.77  0.34
+ 18   22      26     a N-t & cent i/i+4 1.96  157.8 -114.6  168.4   -5.25  0.33
+ 19   23      27     a N-t & cent i/i+4 2.16  135.3 -124.8  135.0   -3.78  2.34
+ 20   24      28     a N-t & cent i/i+4 2.24  152.3 -121.1  158.3   -4.68  0.00
+ 21   25      29     a N-t & cent i/i+4 1.84  144.9 -124.6  144.8   -5.23  2.88
+ 22   26      30     a C-t & isol i/i+4 1.90  126.6  -79.3  147.6   -2.36  1.94
+ 
+# of active HBDB terms   :   22
+Kdir - directional force :   0.200
+Klin - linearity   force :   0.080
+ 
+Edir - average energy/HB :  -5.050
+Elin - average energy/HB :   0.561
+ 
+
+XplorPot.scale: 1.00
+
+   Violations in XPLOR term     IMPR
+             threshold: 5.000000
+
+ (atom-i        |atom-j        |atom-k        |atom-L        )    angle    equil.   delta    energy   const.   period
+
+ Number of violations greater    5.000:     0
+ RMS deviation=   0.336
+
+XplorPot.scale: 1.00
+
+   Dipolar Coupling restraints in potential term: amide_NH_free ( threshold=0.01 )
+
+V  id           atom m                 atom n          obs    calc       diff        dev   useSign
+-----------------------------------------------------------------------------------------
+*    0 (        4  ASN    N)  (        4  ASN   HN)   0.722  -5.333      4.111          0   False
+*    1 (       11  ASN    N)  (       11  ASN   HN)   5.853   5.342   -0.01062          0   False
+*    2 (       13  THR    N)  (       13  THR   HN)   8.587    9.38      0.293          0   False
+     3 (       21  LEU    N)  (       21  LEU   HN)   9.964      10          0          0   False
+     4 (       26  VAL    N)  (       26  VAL   HN)   4.811     4.5          0          0   False
+     5 (       27  ARG    N)  (       27  ARG   HN)   6.191    6.39          0          0   False
+
+number of restraints: 6
+simulation: SizeOneEnsemble_XplorSimulation
+threshold: 0.01
+potential type: square
+averaging type: sum
+ scale      = 1
+ useDistance= FALSE
+ useSign    = FALSE
+ gyroA      = 1
+ gyroB      = 1
+ oTensor    = amide_NH
+
+
+   Dipolar Coupling restraints in potential term: amide_NH_work ( threshold=0.01 )
+
+V  id           atom m                 atom n          obs    calc       diff        dev   useSign
+-----------------------------------------------------------------------------------------
+     0 (        1  MET    N)  (        1  MET   HN)   3.036  -2.534  -0.001813          0   False
+     1 (        2  GLY    N)  (        2  GLY   HN)    1.64  -1.314          0          0   False
+     2 (        5  THR    N)  (        5  THR   HN)   3.082   3.059          0          0   False
+     3 (        6  ARG    N)  (        6  ARG   HN)   7.724   8.183          0          0   False
+     4 (        7  GLU    N)  (        7  GLU   HN)   5.542   6.015          0          0   False
+     5 (        8  LEU    N)  (        8  LEU   HN)   2.402   2.867          0          0   False
+     6 (        9  PHE    N)  (        9  PHE   HN)   5.878    6.23          0          0   False
+     7 (       10  LEU    N)  (       10  LEU   HN)   8.633   9.108          0          0   False
+     8 (       12  PHE    N)  (       12  PHE   HN)   4.262   4.501          0          0   False
+     9 (       14  ILE    N)  (       14  ILE   HN)   8.998   8.534          0          0   False
+    10 (       15  VAL    N)  (       15  VAL   HN)   4.776   4.901          0          0   False
+    11 (       16  LEU    N)  (       16  LEU   HN)   6.191   6.679          0          0   False
+    12 (       17  ILE    N)  (       17  ILE   HN)   9.702   10.19          0          0   False
+    13 (       18  THR    N)  (       18  THR   HN)    7.44   7.916          0          0   False
+    14 (       19  VAL    N)  (       19  VAL   HN)   4.431   4.904          0          0   False
+    15 (       20  ILE    N)  (       20  ILE   HN)   7.773   7.749          0          0   False
+    16 (       22  MET    N)  (       22  MET   HN)   5.958   6.416          0          0   False
+    17 (       23  TRP    N)  (       23  TRP   HN)   4.913   4.908          0          0   False
+    18 (       24  LEU    N)  (       24  LEU   HN)   8.753   8.596          0          0   False
+    19 (       25  LEU    N)  (       25  LEU   HN)   8.633   8.236          0          0   False
+    20 (       28  SER    N)  (       28  SER   HN)   9.342   9.732          0          0   False
+    21 (       29  TYR    N)  (       29  TYR   HN)   3.576   4.077  0.0007852          0   False
+    22 (       30  GLN    N)  (       30  GLN   HN)   0.673  -1.157          0          0   False
+    23 (       31  TYR    N)  (       31  TYR   HN)   2.409  -2.294          0          0   False
+
+number of restraints: 24
+simulation: SizeOneEnsemble_XplorSimulation
+threshold: 0.01
+potential type: square
+averaging type: sum
+ scale      = 1
+ useDistance= FALSE
+ useSign    = FALSE
+ gyroA      = 1
+ gyroB      = 1
+ oTensor    = amide_NH
+
+
+   CSA restraints in term: amide_N1_free ( threshold=0.01 )
+
+V  id       atom m             obs      calc     diff     dev
+---------------------------------------------------------------------------
+*   0 (        4  ASN    N)   -5.647   -42.25    -31.6        0
+*   1 (        5  THR    N)       58   -15.25   -68.25        0
+*   2 (        6  ARG    N)    62.71    78.79    11.07        0
+*   3 (       10  LEU    N)    45.06    50.94   0.8798        0
+    4 (       19  VAL    N)    73.41    74.52        0        0
+*   5 (       29  TYR    N)    27.82   -2.231   -25.05        0
+
+number of restraints: 6
+simulation: SizeOneEnsemble_XplorSimulation
+threshold: 0.01
+potential type: square
+tensor class: bond
+atom order: 123
+ scale      = 1
+ sigma      = { 64.9, -105.9, 41 }
+ beta       = -17
+ gamma      = 0
+ DaScale    = -10.735
+ oTensor    = amide_N
+
+
+   CSA restraints in term: amide_N1_gly_work ( threshold=0.01 )
+
+V  id       atom m             obs      calc     diff     dev
+---------------------------------------------------------------------------
+    0 (        2  GLY    N)   -7.408   -6.195        0        0
+
+number of restraints: 1
+simulation: SizeOneEnsemble_XplorSimulation
+threshold: 0.01
+potential type: square
+tensor class: bond
+atom order: 123
+ scale      = 1
+ sigma      = { 62.2333, -103.767, 41.5333 }
+ beta       = -21.6
+ gamma      = 0
+ DaScale    = -10.735
+ oTensor    = amide_N
+
+
+   CSA restraints in term: amide_N1_work ( threshold=0.01 )
+
+V  id       atom m             obs      calc     diff     dev
+---------------------------------------------------------------------------
+    0 (        1  MET    N)   -29.52   -33.81        0        0
+    1 (        7  GLU    N)    33.14    29.05        0        0
+    2 (        8  LEU    N)     62.5    57.51        0        0
+    3 (        9  PHE    N)    94.59    89.59        0        0
+    4 (       11  ASN    N)    42.58    47.06        0        0
+    5 (       12  PHE    N)    81.22    79.85        0        0
+    6 (       13  THR    N)    99.08    95.04        0        0
+    7 (       14  ILE    N)     48.8    46.46        0        0
+    8 (       15  VAL    N)    57.83    61.11        0        0
+    9 (       16  LEU    N)    98.51    96.71        0        0
+   10 (       17  ILE    N)    88.58    86.97        0        0
+   11 (       18  THR    N)    51.48    55.23        0        0
+   12 (       20  ILE    N)    101.2    98.87        0        0
+   13 (       21  LEU    N)    66.06    66.08        0        0
+   14 (       22  MET    N)    54.56    55.03        0        0
+   15 (       23  TRP    N)    83.47    82.59        0        0
+   16 (       24  LEU    N)    94.42    92.42        0        0
+   17 (       25  LEU    N)    45.06     40.1        0        0
+   18 (       26  VAL    N)    63.13     58.5        0        0
+   19 (       27  ARG    N)    98.51    94.01        0        0
+   20 (       28  SER    N)    88.23    92.45        0        0
+   21 (       30  GLN    N)    6.744    11.74        0        0
+   22 (       31  TYR    N)    18.19    13.19        0        0
+
+number of restraints: 23
+simulation: SizeOneEnsemble_XplorSimulation
+threshold: 0.01
+potential type: square
+tensor class: bond
+atom order: 123
+ scale      = 1
+ sigma      = { 64.9, -105.9, 41 }
+ beta       = -17
+ gamma      = 0
+ DaScale    = -10.735
+ oTensor    = amide_N
+
+Residues that violate torsionDBPot 
+
+Residue       Term                           Threshold energy     Energy     Angles 
+
+
+  Violated NOE restraints in potential term: noe ( threshold=0.5 )
+
+ id       atoms in set i         atoms in set j   calc      obs range     diff     comment
+----------------------------------------------------------------------------------------
+
+number of restraints: 19
+simulation: SizeOneEnsemble_XplorSimulation
+threshold: 0.5
+number of monomers: 1
+exponent for distance calculation: 6
+potential type: soft
+averaging type: sum
+ scale = 1
+ hardExp = 2
+ rSwitch = 0.5
+ softExp = 1
+ asympSlope = 1
+
