@@ -1,7 +1,7 @@
 # SIMPLE PROTOCOL TO FOLD OR REFINE MEMBRANE PROTEIN STRUCTURES
 # WITH OS-ssNMR CSA AND DC RESTRAINTS
 #
-# Written by D. K. Weber, Veglia Lab (last revised April 26 2021)
+# Written by D. K. Weber, Veglia Lab (last revised April 30 2021)
 #
 # DESCRIPTION
 # -----------
@@ -158,7 +158,7 @@ def parse_args():
     )
     parser.add_argument(
         '--repelStart', type=str, choices=['yes', 'no'], 
-        help='Implement two initial high-temperature torsion dynamics stages using REPEL. Only valid if using EEFX forcefield. Default: yes', default='yes'
+        help='Implement two initial high-temperature torsion dynamics stages using VDW. Only valid if using EEFX forcefield. Default: yes', default='yes'
     )
     parser.add_argument(
         '--resetCenter', type=str, choices=['yes', 'no'], 
@@ -168,14 +168,40 @@ def parse_args():
         '--ezPot', type=str, 
         help='Use EzPot to position . Default: None', default=''
     )
-    parser.add_argument(
-        '--eefx', type=str, choices=['yes', 'no'], 
-        help='Use EEFX forcefield. If no, then RepelPot is used. Default: yes', default='yes'
-    )
+ #   parser.add_argument(
+ #       '--eefx', type=str, choices=['yes', 'no'], 
+ #       help='Use EEFX forcefield. If no, then RepelPot is used. Default: yes', default='yes'
+ #   )
     parser.add_argument(
         '--rampeefx', type=str, choices=['yes', 'no'], 
         help='Ramp EEFX scale during simulated annealing. Default: yes', default='yes'
     )
+    parser.add_argument(
+        '--relax', type=str, choices=['yes', 'no'],
+        help='Do torsion dynamics after simulated annealing. Default: no', default='no'
+    )
+    parser.add_argument(
+        '--relaxTerms', type=str, nargs='+',
+        help='Perform torsion dynamics after annealing with only these restraint terms (full scale). Default: All allowed terms.',
+        default='', choices=['CDIH', 'NOE', 'CS_w', 'DIPL_w', 'torsionDB', 'BOND', 'IMPR', 'ANGL', 'RAMA']
+    )
+    parser.add_argument(
+        '--relaxSteps', type=int, 
+        help='Number of steps used for torsion dynamics after simulated annealing. Default: 15000 (15 ps)', default=15000
+    )
+    parser.add_argument(
+        '--relaxTemp', type=float, 
+        help='Temperature for high torsion dynamics after simulated annealing. Default: 25.0 K', default=25.0
+    )
+    parser.add_argument(
+        '--torsionPot', type=str, choices=['torsionDB', 'RAMA', 'none'],
+        help='Apply knowledge-based torsion restraints. Default: yes', default='yes'
+    )
+    parser.add_argument(
+        '--nonbondedPot', type=str, choices=['eefx', 'repel', 'VDW'],
+        help='Nonbonded parameters to use. Default: eefx', default='eefx'
+    )
+    
     args = parser.parse_args()
     return args
 
@@ -191,14 +217,12 @@ import random
 # FORCE CONSTANTS FOR RESTRAINTS
 # ===============================================================================
 # Set force constants in kcal/mol/(err^2) - initial and final values
-ini_tordb = 0.002   ;	fin_tordb = 2.0   # Statistical torsion angles - Marassi setting
 ini_bond  = 1.0	    ;	fin_bond  = 1.0   # Bond lengths - Marassi settings
 ini_angl  = 0.4	    ;	fin_angl  = 1.0   # Bond angles - Marassi settings
 ini_impr  = 0.1	    ;	fin_impr  = 1.0   # Improper torsion angles - Marassi settings
 ini_dihd  = 10.0    ;	fin_dihd  = 200.0 # Experimental torsions (CDIH)
 ini_noe   = 2.0	    ;	fin_noe	  = 40.0  # NOE distances - Veglia settings
-#ini_vrep  = 0.90    ;	fin_vrep  = 0.75  # VDW Repulsion - Veglia seetings (ignored with EEFX)
-#ini_vrcn  = 0.001   ;	fin_vrcn  = 10.0  # 
+
 
 # Set intial and final CSA and DC force constants - based on weighting factors to CDIH terms
 # See for details: Shi et al (2009) J Biol NMR, DOI: 10.1007/s10858-009-9328-9
@@ -213,7 +237,7 @@ fin_cs    = fin_dihd * w_slf * 1/(w_r+1)     # CSA force final
 # INITIALIZE STRUCTURE
 # ===============================================================================
 structure_in = args.structure_in
-if args.eefx == 'yes':
+if args.nonbondedPot == 'eefx':
     import eefxPotTools
     eefxPotTools.initEEFx()
 ini_model=structure_in
@@ -234,7 +258,7 @@ highTempParams1 = []                  # Settings for high T torsion dynamics - S
 highTempParams2 = []                  # Settings for high T torsion dynamics - Stage 2 EEFX
 highTempParams = []                   # Settings for high T torsion dynamics - REPEL and Stage 3 EEFX
 rampedParams = []                     # Settings for annealing stage
-lowTempParams = []                    # Settings for low T dynamics (i.e., Powell minimization)
+relaxParams = []                    # Settings for low T dynamics (i.e., Powell minimization)
 
 
 # DIPOLAR COUPLING RESTRAINTS
@@ -269,8 +293,11 @@ if DC_NH_work:
     pots.append(dc_w)
     #highTempParams.append(StaticRamp("dc.setScale(ini_dc)"))
     rampedParams.append(MultRamp(ini_dc, fin_dc, "dc_w.setScale(VALUE)"))
-    lowTempParams.append(StaticRamp("dc_w.setScale(fin_dc)"))
-    
+    if 'DIPL_w' in args.relaxTerms:
+        relaxParams.append(StaticRamp("dc_w.setScale(fin_dc)"))
+    else:
+        relaxParams.append(StaticRamp("dc_w.setScale(0)"))
+        
     for t in dc_tensor.values():
         t.setFreedom( "fixDa, fixRh, fixAxis" )
         pass
@@ -291,7 +318,7 @@ if DC_NH_free:
     pots.append(dc_f)
     #highTempParams.append(StaticRamp("dc.setScale(ini_dc)"))
     rampedParams.append(MultRamp(0, 0, "dc_f.setScale(VALUE)"))
-    lowTempParams.append(StaticRamp("dc_f.setScale(0)"))
+    relaxParams.append(StaticRamp("dc_f.setScale(0)"))
     
     for t in dc_tensor.values():
         t.setFreedom( "fixDa, fixRh, fixAxis" )
@@ -361,7 +388,10 @@ if CSA_all_work:
     pots.append(csa_w)
     #highTempParams.append(StaticRamp("csa.setScale(ini_cs)"))
     rampedParams.append(MultRamp(ini_cs, fin_cs, "csa_w.setScale(VALUE)"))
-    lowTempParams.append(StaticRamp("csa_w.setScale(fin_cs)"))
+    if 'CS_w' in args.relaxTerms:
+        relaxParams.append(StaticRamp("csa_w.setScale(fin_cs)"))
+    else:
+        relaxParams.append(StaticRamp("csa_w.setScale(0)"))
 
     for t in csa_tensor.values():
         t.setFreedom( "fixDa, fixRh, fixAxis" )
@@ -387,7 +417,7 @@ if CSA_all_free:
     pots.append(csa_f)
     #highTempParams.append(StaticRamp("csa.setScale(ini_cs)"))
     rampedParams.append(MultRamp(0, 0, "csa_f.setScale(VALUE)"))
-    lowTempParams.append(StaticRamp("csa_f.setScale(0)"))
+    relaxParams.append(StaticRamp("csa_f.setScale(0)"))
 
     for t in csa_tensor.values():
         t.setFreedom( "fixDa, fixRh, fixAxis" )
@@ -408,19 +438,37 @@ if DIHE:
     highTempParams2.append(StaticRamp("pots['CDIH'].setScale(ini_dihd)"))
     highTempParams.append(StaticRamp("pots['CDIH'].setScale(ini_dihd)"))
     rampedParams.append(StaticRamp("pots['CDIH'].setScale(fin_dihd)"))
-    lowTempParams.append(StaticRamp("pots['CDIH'].setScale(fin_dihd)"))
+    if 'CDIH' in args.relaxTerms:
+        relaxParams.append(StaticRamp("pots['CDIH'].setScale(fin_dihd)"))
+    else:
+        relaxParams.append(StaticRamp("pots['CDIH'].setScale(0)"))
     pots['CDIH'].setThreshold(5.00)     # dflt [2.0]
 
 
 # CHEMISTRY KNOWLEDGE TERMS
 # ===============================================================================
-# Knowledge-based torsions
-from torsionDBPotTools import create_TorsionDBPot
-torsionDB = create_TorsionDBPot(name='torsionDB')
-pots.append(torsionDB)
-rampedParams.append(MultRamp(ini_tordb, fin_tordb, "torsionDB.setScale(VALUE)"))
-lowTempParams.append(StaticRamp("pots['torsionDB'].setScale(fin_tordb)"))
+# torsionDB torsion-angle database potential - supersedes RAMA
+if args.torsionPot == 'torsionDB':
+    from torsionDBPotTools import create_TorsionDBPot
+    torsionDB = create_TorsionDBPot(name='torsionDB', system='protein')
+    pots.append(torsionDB)
+    rampedParams.append(MultRamp(0.002, 2, "torsionDB.setScale(VALUE)"))
+    if 'torsionDB' in args.relaxTerms:
+        relaxParams.append(StaticRamp("pots['torsionDB'].setScale(2)"))
+    else:
+        relaxParams.append(StaticRamp("pots['torsionDB'].setScale(0)"))
 
+# Old RAMA torsion-angle database potential
+if args.torsionPot == 'RAMA':
+    protocol.initRamaDatabase()
+    pots.append(XplorPot('RAMA'))
+    rampedParams.append(MultRamp(.02,1,"pots['RAMA'].setScale(VALUE)"))
+    if 'RAMA' in args.relaxTerms:
+        relaxParams.append(StaticRamp("pots['RAMA'].setScale(1)"))
+    else:
+        relaxParams.append(StaticRamp("pots['RAMA'].setScale(0)"))
+    
+        
 # Bonded geometrical parameters
 from xplorPot import XplorPot
 pots.append(XplorPot('BOND'))          # Dflt scale [1]
@@ -429,9 +477,21 @@ pots.append(XplorPot('IMPR'))          # Dflt scale [1]
 rampedParams.append(MultRamp(ini_bond, fin_bond, "pots['BOND'].setScale(VALUE)"))
 rampedParams.append(MultRamp(ini_angl, fin_angl, "pots['ANGL'].setScale(VALUE)"))
 rampedParams.append(MultRamp(ini_impr, fin_impr, "pots['IMPR'].setScale(VALUE)"))
-lowTempParams.append(StaticRamp("pots['BOND'].setScale(fin_bond)"))
-lowTempParams.append(StaticRamp("pots['ANGL'].setScale(fin_angl)"))
-lowTempParams.append(StaticRamp("pots['IMPR'].setScale(fin_impr)"))
+
+if 'BOND' in args.relaxTerms:
+    relaxParams.append(StaticRamp("pots['BOND'].setScale(fin_bond)"))
+else:
+    relaxParams.append(StaticRamp("pots['BOND'].setScale(0)"))
+    
+if 'ANGL' in args.relaxTerms:
+    relaxParams.append(StaticRamp("pots['ANGL'].setScale(fin_angl)"))
+else:
+    relaxParams.append(StaticRamp("pots['ANGL'].setScale(0)"))
+    
+if 'IMPR' in args.relaxTerms:
+    relaxParams.append(StaticRamp("pots['IMPR'].setScale(fin_impr)"))
+else:
+    relaxParams.append(StaticRamp("pots['IMPR'].setScale(0)"))
 
 # Set threshold for violations of PotList terms
 pots['BOND'].setThreshold(0.05)     # dflt [0.05]
@@ -449,12 +509,12 @@ if HBDA:
     # hbda - distance/angle bb hbond term
     protocol.initHBDA(HBDA)
     pots.append( XplorPot('HBDA') )
-
+    
     # hbdb - knowledge-based backbone hydrogen bond term
     protocol.initHBDB()
     pots.append( XplorPot('HBDB') )
 
-    
+        
 # NOE DISTANCE RESTRAINTS
 # ===============================================================================
 # Load restraint files
@@ -471,7 +531,10 @@ if NOE:
         dsts.append(NOE)
     pots.append(dsts)
     rampedParams.append(MultRamp(ini_noe, fin_noe, "dsts.setScale(VALUE)"))
-    lowTempParams.append( StaticRamp("dsts.setScale(fin_noe )"))
+    if 'NOE' in args.relaxTerms:
+        relaxParams.append( StaticRamp("dsts.setScale(fin_noe)"))
+    else:
+        relaxParams.append( StaticRamp("dsts.setScale(0)"))
 
 
 # IMMX IMPLICIT MEMBRANE MODEL
@@ -499,7 +562,7 @@ eefx.setProfileN(immx_nparameter)
 eefx.setA(0.85)
 setCenter(immx_com, Zpos)		# Translate selected center of mass to IMMx Zpos.
 # only apply restraints if eefx is specified
-if args.eefx == 'yes':
+if args.nonbondedPot == 'eefx':
     pots.append(eefx)
     highTempParams1.append(StaticRamp("eefx.setScale(0)"))
     if args.rampeefx == 'yes':
@@ -508,12 +571,12 @@ if args.eefx == 'yes':
     if args.rampeefx == 'no':
         highTempParams.append(StaticRamp("eefx.setScale(1.0)"))
         rampedParams.append(StaticRamp("eefx.setScale(1.0)"))
-    lowTempParams.append(StaticRamp("eefx.setScale(1.0)"))
-
+    relaxParams.append(StaticRamp("eefx.setScale(1.0)"))
+ 
 
 # INITIALIZE REPEL FOR FIRST STAGES OF TORSION DYNAMICS
 #===============================================================================
-if args.eefx == 'yes':
+if args.nonbondedPot == 'eefx':
     pots.append(XplorPot('VDW'))          # dflt scale [1]
     highTempParams1.append(StaticRamp("pots['VDW'].setScale(0.004)"))
     highTempParams1.append(StaticRamp("""protocol.initNBond(cutnb=100,
@@ -526,13 +589,13 @@ if args.eefx == 'yes':
     highTempParams2.append(StaticRamp("pots['VDW'].setScale(0.1)"))
     highTempParams.append(StaticRamp("pots['VDW'].setScale(0)"))
     rampedParams.append(StaticRamp("pots['VDW'].setScale(0)"))
-    lowTempParams.append(StaticRamp("pots['VDW'].setScale(0)"))
+    relaxParams.append(StaticRamp("pots['VDW'].setScale(0)"))
 
 
-# INITIALIZE REPELPOT IF NOT USING EEFX
+# INITIALIZE NEW REPELPOT POTENTIAL 
 #===============================================================================
 repelStart = args.repelStart
-if args.eefx == 'no':
+if args.nonbondedPot == 'repel':
     # Turn off repelStart (if accidentally set to 'yes') option
     # used to phase in EEFX params
     repelStart = 'no'
@@ -540,8 +603,14 @@ if args.eefx == 'no':
     from repelPotTools import create_RepelPot,initRepel
     repel = create_RepelPot('repel')
     pots.append(repel)
-    rampedParams.append( StaticRamp("initRepel(repel,use14=False)") )
-    rampedParams.append( MultRamp(.004,4,  "repel.setScale( VALUE)") )
+
+    if args.torsionPot == 'torsionDB':
+        rampedParams.append(StaticRamp("initRepel(repel,use14=False)"))
+    else:
+        rampedParams.append(StaticRamp("initRepel(repel,use14=True)"))
+        
+    rampedParams.append(MultRamp(.004,4,"repel.setScale(VALUE)") )
+    relaxParams.append(StaticRamp("repel.setScale(4)"))
     # nonbonded interaction only between CA atoms
     highTempParams.append( StaticRamp("""initRepel(repel,
                                                use14=True,
@@ -551,14 +620,48 @@ if args.eefx == 'no':
                                                interactingAtoms='name CA'
                                                )""") )
 
-    # Selected 1-4 interactions.
-    import torsionDBPotTools
-    repel14 = torsionDBPotTools.create_Terminal14Pot('repel14')
-    pots.append(repel14)
-    highTempParams.append(StaticRamp("repel14.setScale(0)"))
-    rampedParams.append(MultRamp(0.004, 4, "repel14.setScale(VALUE)"))
+    # 1-4 interactions when using torsionDB
+    if args.torsionPot == 'torsionDB':
+        # Selected 1-4 interactions.
+        import torsionDBPotTools
+        repel14 = torsionDBPotTools.create_Terminal14Pot('repel14')
+        pots.append(repel14)
+        highTempParams.append(StaticRamp("repel14.setScale(0)"))
+        rampedParams.append(MultRamp(0.004, 4, "repel14.setScale(VALUE)"))
+        relaxParams.append(StaticRamp("repel14.setScale(4)"))
 
 
+# INITIALIZE OLD REPEL POTENTIAL
+#===============================================================================
+if args.nonbondedPot == 'VDW':
+    # Turn off repelStart (if accidentally set to 'yes') option.
+    repelStart = 'no'
+    pots.append(XplorPot('VDW'))
+
+    if args.torsionPot == 'torsionDB':
+        # Exclude 1-2, 1-3, 1-4 interactions if using torsionDB (nbxmod = 4) 
+        highTempParams.append(StaticRamp("""protocol.initNBond(cutnb=100,
+                                                           repel=1.2,
+                                                           rcon=0.004,
+                                                           nbxmod=4,
+                                                           tolerance=45,
+                                                           onlyCA=1)"""))
+        rampedParams.append(StaticRamp("protocol.initNBond(nbxmod=4)"))
+
+    else:
+        # Exclude 1-2, 1-3. Compute 1-4 interactions if not using torsionDB (nbxmod = 5) 
+        highTempParams.append(StaticRamp("""protocol.initNBond(cutnb=100,
+                                                           repel=1.2,
+                                                           rcon=0.004,
+                                                           nbxmod=5,
+                                                           tolerance=45,
+                                                           onlyCA=1)"""))
+        rampedParams.append(StaticRamp("protocol.initNBond(nbxmod=5)"))
+        
+    rampedParams.append(MultRamp(0.9, 0.8,"xplor.command('param nbonds repel VALUE end end')"))
+    rampedParams.append(MultRamp(0.004, 4.0,"xplor.command('param nbonds rcon VALUE end end')"))
+
+    
 # EZ-POTENTIAL
 #===============================================================================
 Ez_pots = []
@@ -719,6 +822,18 @@ def calcOneStructure(loopInfo):
         m.potList().add(Ezt)
         m.run()
 
+    if args.relax == 'yes':
+        InitialParams(relaxParams)
+        protocol.initDynamics(dyn,
+                              potList=pots,                # potential terms to use.
+                              bathTemp=args.relaxTemp,     # set bath temperature.
+                              initVelocities=1,            # uniform initial velocities.
+                              finalTime=30,                # run for finalTime or
+                              numSteps=args.relaxSteps,    # numSteps * 0.001, whichever is less.
+                              printInterval=100)           # printing rate in steps.
+        dyn.setETolerance(args.relaxTemp/100)                    # used to det. stepsize, dflt [temp/1000].
+        dyn.run()
+        
     # Final minimization.
     #===========================================================================
     # Torsion angle minimization.
@@ -749,7 +864,7 @@ StructureLoop(structLoopAction=calcOneStructure,
               pdbTemplate=outname,
               doWriteStructures=1,              # analyze and write coords after calc
               genViolationStats=1,              # print stats file
-              averageContext=FinalParams(lowTempParams),
+              averageContext=FinalParams(relaxParams),
               averageFitSel="",                 # selection for bkbn rmsd [CA]
               averageCompSel="",                # selection for heavy atom rmsd
               averageTopFraction=0.1,           # Report stats on top 10%
