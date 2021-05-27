@@ -1,7 +1,7 @@
 # hybridTools.tcl
 # ---------------
 # A VMD function to align and analyze helix topology.
-# Written by D. K. Weber (last revised Jul 3 2020)
+# Written by D. K. Weber (last revised June 7 2020)
 #
 # Features
 # --------
@@ -280,4 +280,136 @@ proc stats { data } {
 }
 
 
+proc clashes { selection { args } } {
+    # Find all VDW clashes in selection
+    # Will not work on oligomeric assembly - requires some modification still.
+    #
+    # Parameters
+    # ----------
+    # selection: VMD selection
+    #    Selection of protein to find non-bonded clashes.
+    # 
+    # 
+    # Optional flags
+    # --------------
+    # cutoff: float
+    #    Cuttoff when screening for pairwaise contacts.
+    # allowance: float
+    #    VDW overlap require to be considered a clash. 0.7 ang. recommended
+    #    to produce similar result to PDB deposition server.
+    # out: str
+    #    Output filename.
+    
+    # Handle optional arguments
+    set cutoff [argparse $args "-cutoff" 1 2.2]
+    set allowance [argparse $args "-allowance" 1 0.7]
+    set out [argparse $args "-out" 1 "clashes.dat"]
+    
+    # Get information for each atom in selection
+    set indices [$selection get index]
+    set names [$selection get name]
+    set resnames [$selection get resname]
+    set resids [$selection get resid]
+    set radii [$selection get radius]
+    
+    # Array info by index
+    set i 0
+    foreach index $indices {
+	set bonded($index) []
+	set name($index) [lindex $names $i]
+	set resname($index) [lindex $resnames $i]
+	set resid($index) [lindex $resids $i]
+	set radius($index) [lindex $radii $i]
+	incr i
+    }
+    
+    # Use topoTools to generate bonded list and move to array
+    set bondlist [topo -sel $selection getbondlist]
+    foreach bond $bondlist {
+	lappend bonded([lindex $bond 0]) [lindex $bond 1]
+	lappend bonded([lindex $bond 1]) [lindex $bond 0]
+    }
 
+    # Iterate through each frame/model and find clashes not bonded
+    set num_frames [molinfo top get numframes]
+    set frames []
+    for {set i 0} {$i < $num_frames} {incr i} { lappend frames $i }
+    foreach frame $frames {
+	set clashes($frame) []
+	set num_clashes($frame) 0
+    }
+
+    foreach i $frames {
+	$selection frame $i
+	set coords_t [$selection get "x y z"]
+	set contacts [measure contacts $cutoff $selection]
+	# Array coord by index
+	set c 0
+	foreach coord $coords_t {
+	    set coords([lindex $indices $c]) $coord
+	    incr c
+	}
+	# Go through each contact. Filter out bonded and measure distance
+	set c 0
+	set l1 [lindex $contacts 0]
+	set l2 [lindex $contacts 1]
+	foreach j $l1 {
+	    set k [lindex $l2 $c]
+	    if {[lsearch $bonded($j) $k] < 0 } {
+		if { abs([expr $resid($j) - $resid($k)]) > 0 } {
+		    set d [veclength [vecsub $coords($j) $coords($k)]]
+		    set o [expr $radius($j) + $radius($k) - $d - $allowance]
+		    if { $o > 0 } {
+			lappend clashes($i) [ list $j $k $d $o ]
+		    }
+		}
+	    }
+	    incr c
+	}
+    }
+
+    # Output file
+    set outf [open $out w]
+    
+    # Summarize clashes and get rid of duplicates
+    puts "# Frame   Atom1         Atom2         Distance"
+    puts $outf "# Frame   Atom1         Atom2         Distance"
+    foreach i $frames {
+	foreach clash $clashes($i) {
+	    set a1 [lindex $clash 0]
+	    set a2 [lindex $clash 1]
+	    set d [format "%.2f" [lindex $clash 2]]
+	    set o [format "%.2f" [lindex $clash 3]]
+	    if { [ info exists rec($a2.$a1)] < 1 } {
+		incr num_clashes($i) 1
+		set rec($a1.$a2) 1
+		set str1 [format "%-*s" 9 "$i"]
+		set str2 [format "%-*s" 13 "$resname($a1)-$resid($a1)-$name($a1)"]
+		set str3 [format "%-*s" 13 "$resname($a2)-$resid($a2)-$name($a2)"]
+		puts "$str1 $str2 $str3 $d $o"
+		puts $outf "$str1 $str2 $str3 $d $o"
+	    }
+	}	
+    }
+
+    # Output summary
+    set l []
+    puts "\n# Frame   Clashes"
+    puts $outf "\n# Frame   Clashes"
+    foreach i $frames {
+	set str1 [format "%-*s" 9 "$i"]
+	puts "$str1 $num_clashes($i)"
+	puts $outf "$str1 $num_clashes($i)"
+	lappend l $num_clashes($i)
+    }
+    #set str1 [format "%-*s" 9 "Avg."]
+    #set str2 [format "%-*s" 9 "Std."]
+    #set avg [format "%.2f" [lindex [stats $l] 0]]
+    #set std [format "%.2f" [lindex [stats $l] 1]]
+    #puts "$str1 $avg"
+    #puts "$str2 $std"
+    #puts $outf "$str1 $avg\n"
+    #puts $outf "$str2 $std\n"
+
+    close $outf
+}
