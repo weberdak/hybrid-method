@@ -27,3 +27,8 @@ set thickness 25.72
 draw material Transparent
 draw cylinder [list 0 0 [expr ($thickness/2)+0.1]] [list 0 0 [expr ($thickness/2)-0.1]] radius 20 resolution 100
 draw cylinder [list 0 0 [expr (-$thickness/2)+0.1]] [list 0 0 [expr (-$thickness/2)-0.1]] radius 20 resolution 100
+
+
+## Find clashed (if any)
+set s [atomselect top "all protein"]
+clashes $s -cutoff 2.2 -allowance 0.7 -o clashes.dat
