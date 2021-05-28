@@ -153,7 +153,7 @@ The [pdbutil webserver](https://spin.niddk.nih.gov/bax/nmrserver/pdbutil/ext.htm
 
 #### Step 5: Running the simulated annealing calculation
 
-Now that all of the restraint tables and input files have been prepared, we are ready to run the first simulated annealing stage. The [hybrid.py](hybrid.py) protocol is run customizable BASH script ([hybrid.sh](examples/sln/hybrid.sh)):
+Now that all of the restraint tables and input files have been prepared, we are ready to run the calculation. The [hybrid.py](hybrid.py) protocol is run via customizable BASH script ([hybrid.sh](examples/sln/hybrid.sh)) as follows:
 
 ```bash
 #!/bin/bash -l
@@ -235,29 +235,31 @@ if [[ $SUMMARY -gt 0 ]]; then
 fi
 ```
 
-which is run on the Minnesota Supercomputing Institute (MSI) cluster by:
-
-```bash
-sbatch -p small hybrid_fold.sh
-```
-
-Alternatively, the script can be slightly modified and run locally by:
+and is executed in the command line by:
 
 ```bash
 bash hybrid_fold.sh
 ```
 
-Ready-to-run examples are included in this repository: [sln_local.tar.xz](examples/sln/sln_local.tar.xz) (local PC) and [sln_slurm.tar.xz](examples/sln/sln_slurm.tar.xz) (remote CPU cluster using the SLURM scheduler). Examples for using RepelPot instead of EEFx are also included: [sln_local_repelPot.tar.xz](examples/sln/sln_local_repelPot.tar.xz) and [sln_slurm_repelPot.tar.xz](examples/sln/sln_slurm_repelPot.tar.xz). Running calculations through shell script avoids having to edit the hybrid.py program each time, which requires a good understanding of both XPLOR-NIH and Python scripting. This generic method is a good starting point to solving the structure and topology of simple single-pass helical membrane proteins. However, if more complicated systems are to be solved, such as multi-pass proteins, beta-barrels and oligomers, the hybrid.py and BASH scripts will have to be developed further to handle additional restraint types.
+By running calculations through a shell script, we can avoid having to edit the hybrid.py program each time, which requires a good understanding of both XPLOR-NIH and Python scripting. This also focuses our attention to the most critical parameters. So far the hybrid.py is only tested to handle the structure and topology of simple single-pass helical membrane proteins. If more complicated systems are to be solved, such as multi-pass proteins, beta-barrels and oligomers, the hybrid.py and BASH scripts will have to be developed further to handle additional restraint types.
 
 
 
 ##### Notes about specifying restraints
 
 ###### Optional parameters
-All restraints (DC_NH_X, CSA_N1_X, CSA_N1_gly_X, HBDA, NOE and DIHE) are completely optional and can be excluded from the calculation by simply putting "" in place of the file paths. This is done for the DC_NH_free, CSA_N1_free, and CSA_N1_gly_free restraints in the above example and all CSAs and DCs are set as working restraints.
+All restraints (DC_NH_work/free, CSA_N1_work/free, CSA_N1_gly_work/free, HBDA, NOE and DIHE so far) are completely optional and can be excluded from the calculation by simply putting "" in place of the file paths. This is done for the CSA_N1_gly_free restraints in the above example since none of the glycine CSA parameters were reserved as free restraints by the rfree.py script. If CSA and DC restraints are sparse, then it might be worthwhile the exclude the use to CSA_N1_gly_free, CSA_N1_free, and DC_NH_free restraints entirely.
 
-###### EEFx and IMMx force fields
-The basic XPLOR-NIH protocol is taken from ([Tian et al., J. Biol. NMR, 2017](https://doi.org/10.1007/s10858-016-0082-5)) and applies EEFx force field and IMMx implicit membrane model ([Tian et al., Biophys. J., 2015](https://doi.org/10.1016/j.bpj.2015.06.047) ) developed by the Marassi Lab. The IMMx membrane hydrophobic thickness is specified by "--immx_thickness", which for this example is set to the thickness of a DMPC/POPC (4:1 molar ratio) bicelle (25.72 angstroms) as taken from the weighted averages of DMPC and POPC (= 25.4 x 0.8 + 27.0 x 0.2). See p. 379 of the [Handbook of Lipid Bilayers - 2nd Edition](https://books.google.com/books?hl=en&lr=&id=JgnLBQAAQBAJ&oi=fnd&pg=PP1&dq=Marsh,+Handbook+of+lipid+bilayers&ots=t_vN1All4R&sig=yQdbT7LruGwNszFa586dCV1WPX4#v=onepage&q=Marsh%2C%20Handbook%20of%20lipid%20bilayers&f=false) (Marsh, 2013). The IMMx nparameter (--immx_nparameter) defines the transition at the hydrophobic/hydrophilic interface and is set to its default value of 10. Note also that the EEFx parameters are phased in from REPEL terms during the initial high temperature torsion dynamics (set using the --repelStart option).
+
+
+###### Non-bonded interactions and membrane models
+In the above example, the non-bonded interactions are treated using the standard repulsive terms (RepelPot) specified by "repel" entered for the --nonbondedPot setting. The old VDW form can also be used by entering "VDW". Note that these forcefields cannot be implemented with an implicit membrane model (based on a Z-variable dielectric constant) as they do not include electrostatic parameters. Instead, the depth of insertion in the membrane is optimized by the empirical [Ez Potential](https://www.sciencedirect.com/science/article/abs/pii/S0022283606012095) by entering the full protein selection (XPLOR language) in the --ezPot field. This stage can also be skipped by leaving the field blank with quotations marks ("").  Note that the value "--immx_thickness" (explained below) is used for the ezPot method. 
+
+Alternatively the EEFx forcefield and IMMx implicit membrane developed by the Marassi Lab ([Tian et al., J. Biol. NMR, 2017](https://doi.org/10.1007/s10858-016-0082-5), [Tian et al., Biophys. J., 2015](https://doi.org/10.1016/j.bpj.2015.06.047)) by specifying "eefx" for --nonbondedPot (see example execution script below).  The IMMx membrane hydrophobic thickness is specified by "--immx_thickness", which for this example is set to the thickness of a DMPC/POPC (4:1 molar ratio) bicelle (25.72 angstroms) as taken from the weighted averages of DMPC and POPC (= 25.4 x 0.8 + 27.0 x 0.2). See p. 379 of the [Handbook of Lipid Bilayers - 2nd Edition](https://books.google.com/books?hl=en&lr=&id=JgnLBQAAQBAJ&oi=fnd&pg=PP1&dq=Marsh,+Handbook+of+lipid+bilayers&ots=t_vN1All4R&sig=yQdbT7LruGwNszFa586dCV1WPX4#v=onepage&q=Marsh%2C%20Handbook%20of%20lipid%20bilayers&f=false) (Marsh, 2013). The IMMx nparameter (--immx_nparameter) defines the transition at the hydrophobic/hydrophilic interface and is set to its default value of 10. Note also that the EEFx parameters are phased in from repulsive VDW terms during the initial high temperature torsion dynamics (set using the --repelStart yes option) since the EEFx parameters are sensitive to severe atomic overlaps and may crash the calculation. For initial folding protocols, the EEFx parameters are also ramped during the simulated annealing (--rampeefx yes). For refinement, the  repelStart and rampeefx are set to no since the structure has been conditioned for EEFx parameters during the folding stage.
+
+
+
+Example EEFx calculation:
 
 
 ```bash
@@ -340,48 +342,56 @@ if [[ $SUMMARY -gt 0 ]]; then
 fi
 ```
 
+Note the these EEFx settings will clashes since the CSA and DC weighting parameters (explained below) have not yet been optimized with the EEFx forcefield and appear to compete against the CDIH terms. The wasn't an issue for initially as the initial paper utilized softer harmonic restraints while this hybrid.py used hard flat-well boundaries.  This issue will hopefully be resolved, but for now it is recommended that the RepelPot terms are used.
+
+
 
 ###### CSA and DC tensors
+
 The maximum <sup>15</sup>N-<sup>1</sup>H dipolar coupling (--DC_NH) is set to the default 10.735 kHz ([Denny et al., J. Mag. Res, 2001](https://doi.org/10.1006/jmre.2001.2405)). The principal axis system (PAS) of the non-glycine chemical shift tensor (--CSA_N1_tensor) is set to the default values of delta11 = 57.3 ppm, delta22 = 81.2 ppm, delta33 = 228.1 ppm ([Murray et al., J. Mag. Res., 2014](http://dx.doi.org/10.1016/j.jmr.2013.12.014)), and the glycine PAS (--CSA_N1_tensor_gly) to the default delta11 = 45.6 ppm, delta22 = 66.3 ppm, delta33 = 211.6 ppm ([Straus et al., J. Biol. NMR, 2003](https://doi.org/10.1023/A:1024098123386)). Note that the <sup>15</sup>N PAS components will be automatically converted to XPLOR-NIH input format. The format specified in the BASH configuration script was chosen as it is more familiar and used throughout the literature. The beta values are set to the defaults of -17.0 and -21.6 degrees as per the above references. Beta values for the <sup>15</sup>N PAS are negative due to the right-hand rule.
+
+
 
 ###### CSA and DC weighting
 The --w_slf and --w_r are the weighting terms for the DC and CSA restraints in the form typically used by the Cross ([Kim et al., J. Am. Chem. Soc., 2001](https://doi.org/10.1021/ja003380x)) and Veglia ([Shi et. al., J. Biol. NMR, 2009](https://doi.org/10.1007/s10858-009-9328-9)) groups. The --w_slf of 5 specifies that the sum of the CSA and DC force constants is 5x that of the torsion angle (DIHE) term (i.e., 5 x 200 kcal/mol = 1000 kcal/mol) and --w_r of 3 specifies that the DC term (i.e., 750 kcal/mol/kHz) is weighted 3x more heavily than the CSA term (i.e., 250 kcal/mol/ppm). These restraints are applied as flat-well potentials in our protocols.
 
 
 
+###### Torsion angles
+Torsion angles can be switched beteen the later database term (torsionDB, the old RAMA term , or completely off by --torsionPot torsionDB / RAMA / none.
+
+
 ##### The overall protocol
 
 A basic overview:
 
-0. Input PDB structure. Optionally unfold at loading and prior to dynamics (--unfold)*.
+0. Input PDB structure. Optionally unfold at loading and prior to dynamics (--unfold yes/no)*.
 1. Initial torsion angle minimization (100 steps)
-2. Center protein (--resetCenter)* to membrane then high temperature torsion dynamics with REPEL (A K for 3000 steps) (--repelStart)*. Centering is based on the center of mass of the helical segment specified by the --tm_domain option.
-3. Center protein (--resetCenter)* then high temperature torsions dynamics phasing in EEFx parameters (A K for 3000 steps) (--repelStart)*
-4. Center protein (--resetCenter)* then high temperature torsion dynamics with only EEFx parameters (A K for B steps)
-5. Center protein (--resetCenter)* again then simulated annealing (A K to C K in D K steps, E steps per increment)
-6. Minimize insertion depth (Z-position) using knowledge-based Ez-Potential (ezPot)*
-7. Powell torsion angle minimization (500 steps)
-8. Powell Cartesian minimization (500 steps)
+2. Center protein (--resetCenter yes/no)* to membrane then high temperature torsion dynamics with repel (--initialTemp X for 3000 steps) (--repelStart yes/no)*. Centering is based on the center of mass of the helical segment specified by the --tm_domain option.
+3. Center protein (--resetCenter yes/no)* then high temperature torsions dynamics phasing in EEFx parameters (--initialTemp X for 3000 steps) (--repelStart yes/no)*
+4. Center protein (--resetCenter yes/no)* then high temperature torsion dynamics with only EEFx parameters (--intialTemp X for --highTempSteps steps)
+5. Center protein (--resetCenter yes/no)* again then simulated annealing (--intialTemp X to --finalTemp in --stepTemp steps, --annealSteps steps per increment)
+6. Minimize insertion depth (Z-position) using knowledge-based Ez-Potential (--ezPot "resid 0:X")*
+7. *Low temperature torsion dynamics (--relax yes/no) using only --relaxTerms X X ... . Applied for --relaxSteps X at temperature --relaxTemp X.
+8. Powell torsion angle minimization (500 steps)
+9. Powell Cartesian minimization (500 steps)
 
 *Optional steps
 
 
 
-In the folding protocol, the input structure is reset to a random coil prior to simulating annealing. The depth of insertion in the membrane is also optimized by the empirical [Ez Potential](https://www.sciencedirect.com/science/article/abs/pii/S0022283606012095) in this example by optionally entering the full protein selection (XPLOR language) in the --ezPot field. This stage can be skipped by leaving the field blank with quotations marks (""). If the helical segment specified by the --tm_domain flag is reasonably accurate, then the impact of the Ez Potential will be minimal as minimization of the IMMx/EEFx terms during simulated annealing and Powell stages will do essentially the same thing.
-
-
-
 ##### Summary statistics
 
-The above example will calculate 1000 structures and at the end will analyze them using the [summary.py](helpers/summary.py) script to produce a [summary.out](examples/sln/output/fold/summary.out) file. This script will find all *.sa files in the out.fold directory (more folders can be appended to this parameter) and rank structures according the lowest energy sum of the DIPL_w CS_w CDIH BOND ANGL IMPR EEFX terms. This will also determine the [R-values](https://pubs.acs.org/doi/10.1021/ja003380x) comparing agreement between the experimental and back-calculated CSA and DC restraints. Note that R-free (of non-working restraints) are computed by specifying options/values "--R_dc_free amide_NH_free" and "--R_csa_free amide_N1_free amide_N1_gly_free". Experimental and back-calculated CSAs and DCs by the top 10 models (default; specify --top X to summarize best X models) are listed at the end of the [summary.out](examples/sln/output/fold/summary.out) file, in which violations are indicated by *. The best X models (and .sa.viols) are also copied to working directory (top.<model>.sa format). 
+The above example will calculate 128 structures and at the end will analyze them using the [summary.py](helpers/summary.py) script to produce a [summary.out](examples/sln/summary/summary.out) file. This script will find all *.sa files in the out.fold directory (more folders can be appended to this parameter) and rank structures according the lowest energy sum of the DIPL_w CS_w CDIH BOND ANGL IMPR EEFX terms. This will also determine the [R-values](https://pubs.acs.org/doi/10.1021/ja003380x) comparing agreement between the experimental and back-calculated CSA and DC restraints. Note that R-free (of non-working restraints) are computed by specifying options/values "--R_dc_free amide_NH_free" and "--R_csa_free amide_N1_free amide_N1_gly_free". Experimental and back-calculated CSAs and DCs by the top 10 models (default; specify --top X to summarize best X models) are listed at the end of the summary.out file, in which violations are indicated by *. The best X models (and .sa.viols) are also copied to working directory (top.<model>.sa format). 
 
 
 
 ##### Visualization in VMD
 
-At this point it is useful to visualize the top structures and analyze important features pertaining to membrane proteins such as the tilt and azimuthal (rotation) angles, and depth of insertion in the membrane. VMD functions introduced by the [hybridTools.tcl](helpers/hybridTools.tcl) script streamlines this analysis. First load the top structures into VMD by entering the following into a UNIX command line:
+At this point it is useful to visualize the top structures and analyze important features pertaining to membrane proteins such as the tilt and azimuthal (rotation) angles, and depth of insertion in the membrane. VMD functions introduced by the [hybridTools.tcl](helpers/hybridTools.tcl) script streamlines this analysis. First, starting in the directory where hybrid.sh is locate, create an analysis folder, go into it, and load the top structures into VMD by entering the following into a UNIX command line:
 
 ```bash
+mkdir analysis
 cd analysis/
 vmd ../summary/top.*.sa
 ```
@@ -392,7 +402,7 @@ note that if there are more than 10 files, the structures wont be loaded in the 
  vmd $(ls ../summary/top.*.sa | sort -V)
 ```
 
-After loading the structures (visualize all at once using Graphics -> Representations -> Trajectory -> enter "0:1:9" in "Draw Multiple Frames" box) you will notice that the structures are scattered around and hard to compare. However, while these structures look different, they are essentially identical according to OS-ssNMR observables since they are degenerate with respect to Z-axis rotations and 180 degrees rotations about the X- or Y-axis. Typically one would do an RMSD fit to align structures, however, this will introduce unwanted rotations and translation that will prevent us from assessing the precision of the tilt/azimuthal angles and depth-of-insertions determined by the XPLOR calculation. While computing the tilt/azimuthal angles, the [hybridTools.tcl](helpers/hybridTools.tcl) functions will also do an alignment that will not affect this information. The complete analysis of the structural bundle can be done by the [analyze.tcl](examples/sln/output/analyze.tcl) script, run using the VMD Tk Console (Extensions -> Tk Console) by: 
+After loading the structures (visualize all at once using Graphics -> Representations -> Trajectory -> enter "0:1:9" in "Draw Multiple Frames" box) you will notice that the structures are scattered around and hard to compare. However, while these structures look different, they are essentially identical according to OS-ssNMR observables since they are degenerate with respect to Z-axis rotations and 180 degrees rotations about the X- or Y-axis. Typically one would do an RMSD fit to align structures, however, this will introduce unwanted rotations and translation that will prevent us from assessing the precision of the tilt/azimuthal angles and depth-of-insertions determined by the XPLOR calculation. While computing the tilt/azimuthal angles, the [hybridTools.tcl](helpers/hybridTools.tcl) functions will also do an alignment that will not affect this information. The complete analysis of the structural bundle can be done by the [analyze.tcl](examples/sln/analysis/analyze.tcl) script, run using the VMD Tk Console (Extensions -> Tk Console) by: 
 
 ```tcl
 source analyze.tcl
@@ -452,20 +462,18 @@ And will do the following for each model:
 5. Translates the protein so that the center of mass of the TM segment is at the origin (X = 0, Y = 0). Specifying "-no_z" ensures that there are no Z-translations. This is important since the depth of insertion is a feature optimized by XPLOR-NIH and should not in anyway be manipulated.
 6. Calculates the azimuthal angle based on the center of mass of the $azi selection, which in this case it is the CA of V15 to provide the azimuthal angle of L16 as per the convention used by [Denny et al. 2001](https://www.sciencedirect.com/science/article/abs/pii/S109078070192405X?via%3Dihub) and the [PISA-SPARKY and pisa.py](https://github.com/weberdak/pisa.py) tools used to fit experimental data. To calculate this:
    1.  The helix is temporarily rotated to zero degrees.
-   2. A center of mass is determined using the N, C, and CA backbone atoms of surrounding i-2 to i+2 residues.
-   3. The vector from $azi to the local helical center of mass is determined.
-   4. The azimuthal angle is then determined the to magnitudes of the X and Y components of this vector.
-   5. The helix tilt readjustment done at step 6.1 is reversed.
+   2.  A center of mass is determined using the N, C, and CA backbone atoms of surrounding i-2 to i+2 residues.
+   3.  The vector from $azi to the local helical center of mass is determined.
+   4.  The azimuthal angle is then determined the to magnitudes of the X and Y components of this vector.
+   5.  The helix tilt readjustment done at step 6.1 is reversed.
 
 
 
-The tilt and azimuthal angles for each model are recorded in the [results_tilt6-28_azi16.dat](examples/sln/output/fold/results_tilt6-28_azi16.dat) file. The average tilt and azimuthal angles of the bundle is 25.6 +/- 1.3 degrees and 123.7 +/- 4.4 degrees, respectively, which is well within the error determined by [PISA-wheel fitting of experimental data](https://github.com/weberdak/pisa.py/blob/master/examples/sarcolipin/sln_explore_errs_log.dat) of 24.7 +/- 1.0 degrees and 125.4 +/- 3.8 degrees. All models (now aligned) are then written to separate PDBs for publication, deposition, analysis using other visualization package, etc, and the membrane leaflets are drawn. In general, a good calculation will typically show:
+The tilt and azimuthal angles for each model are recorded in the [results_tilt6-28_azi16.dat](examples/sln/analysis/results_tilt6-28_azi16.dat) file. The average tilt and azimuthal angles of the bundle is 25.4 +/- 1.6 degrees and 125.7 +/- 3.0 degrees, respectively, which is well within the error determined by [PISA-wheel fitting of experimental data](https://github.com/weberdak/pisa.py/blob/master/examples/sarcolipin/sln_explore_errs_log.dat) of 24.7 +/- 1.0 degrees and 125.4 +/- 3.8 degrees. All models (now aligned) are then written to separate PDBs for publication, deposition, analysis using other visualization package, etc, and the membrane leaflets are drawn. In general, a good calculation will typically show:
 
 1. Polar side chains should be directed towards the upper (azimuthal angle = 0 degrees) and lower (180 degrees) leaflets.
 2. Amphipathic helix at the interfacial regions.
 3. Helical length and tilt angle matched to the bilayer thickness.
-
-
 
 
 
