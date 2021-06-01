@@ -275,7 +275,13 @@ proc stats { data } {
 	set csum2 [expr $csum2 + pow($i,2)] 
     }
     set mean [expr $csum / $num]
-    set std [expr sqrt((($num*$csum2)-pow($csum,2))/($num*($num-1)))]
+    
+    if {$num > 1} {
+	set std [expr sqrt((($num*$csum2)-pow($csum,2))/($num*($num-1)))]
+    } else {
+	set std 0
+    }
+    
     return [list $mean $std]
 }
 
