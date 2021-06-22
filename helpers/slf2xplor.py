@@ -137,7 +137,8 @@ def main():
             f_dc.write(' {0:.3f} {1:.3f} {1:.3f}\n'.format(dc_corr,error_dc))
 
     f_csa.close()
-    f_csa_gly.close()
+    if 'G' in resnames:
+        f_csa_gly.close()
     f_dc.close()
 
         
